@@ -1,0 +1,26 @@
+(def _game-state
+   {'local-player-name ""
+    'by-id {}
+    'zones {'player-1 {} 'player-2 {}}
+    'next-genid 0
+    'players-ready {'player-1 false 'player-2 false}
+    'game-started false
+    'selected-cards {'player-1 nil 'player-2 nil}
+    'health {'player-1 nil 'player-2 nil}
+    'winner nil})
+
+(def _game-callbacks nil)
+
+(defun game-state (state action)
+  (map-get
+     {'player-draw-card nil
+      'player-add-card nil
+      'player-play-card nil
+      'player-ready nil}
+    (map-get 'type action)))
+
+(prn __gd-tree__)
+
+(defun get-tree () __gd-tree__)
+(defun get-root () (gd-call __gd-tree__ "get_root"))
+(defun get-node (node-name) (gd-call (get-root) "get_node" node-name))

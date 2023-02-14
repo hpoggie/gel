@@ -1,0 +1,118 @@
+;; This is the counter that increments when we make a new gensym.
+;; Guarantees that all gensyms are unique, at least up to INT_MAX of them.
+;; It is unlikely that this amount will ever be reached.
+;; TODO: still theoretically possible to collide with one of these symbols intentionally
+(def __GENSYM_COUNTER__ 0)
+(def gensym (fn ()
+                (let (ret (read-string "#G" (repr __GENSYM_COUNTER__)))
+                  (set __GENSYM_COUNTER__ (+ __GENSYM_COUNTER__ 1))
+                  ret)))
+
+(set-function-name! gensym "gensym")
+
+(defmacro defun (name arglist &rest body)
+  (let (func (gensym))
+    `(let (,func ,(cons 'fn (cons arglist body)))
+       (def ,name ,func)
+       (set-function-name! ,func (repr ,name)))))
+
+(defun not (a) (if a false true))
+(defun >= (a b) (not (< a b)))
+(defun <= (a b) (not (> a b)))
+(defmacro += (a b) `(set ,a (+ ,a ,b)))
+(defmacro -= (a b) `(set ,a (- ,a ,b)))
+(defmacro *= (a b) `(set ,a (* ,a ,b)))
+(defmacro /= (a b) `(set ,a (// ,a ,b)))
+(defmacro %= (a b) `(set ,a (% ,a ,b)))
+(defmacro assert (condition)
+  `(if ,condition nil (prn "Assertion Failed: " (quote ,condition))))
+
+;; This is weird because we only want to eval lhs and rhs once, since they
+;; might have side effects
+(defmacro assert= (lhs rhs)
+  (let (val1 (gensym))
+    (let (val2 (gensym))
+      `(let (,val1 ,lhs)
+         (let (,val2 ,rhs)
+            (if (= ,val1 ,val2) nil
+              (progn
+                (prn "Assertion Failed: " (quote ,lhs) " is not equal to " (quote ,rhs))
+                (prn "    Values: " ,val1 " is not equal to " ,val2))))))))
+
+(defun and (a b) (if a (if b true false) false))
+(defun or (a b) (if a true (if b true false)))
+(defun list? (a) (or (cons? a) (empty? a)))
+
+(defun caar (lst) (car (car lst)))
+
+(defmacro flet (fname args fn-body &rest let-body)
+  `(let (,fname (fn ,args ,fn-body))
+     (set-function-name! ,fname ,(repr fname))
+     (progn
+       ,@let-body)))
+
+(defmacro dotimes (times body)
+  (let (counter (gensym))
+    `(let (,counter ,times)
+       (flet f ()
+             (if (= ,counter 0) nil
+               (progn
+                 (set ,counter (- ,counter 1))
+                 ,body
+                 (f)))
+             (f)))))
+
+(defmacro for (arg &rest body)
+  (let (vname (car arg))
+    `(flet f (lst)
+           (if lst
+               (progn
+                 (let (,vname (car lst))
+                   (progn ,@body))
+                 (f (cdr lst)))
+             nil)
+           (f ,(car (cdr arg))))))
+
+(defun kind (error) (map-get error 'kind))
+
+(defun append! (lst obj) (rplacd! (tail lst) obj))
+
+(defmacro ->> (&rest forms)
+  (if (empty? forms)
+      nil
+      (if (= (len forms) 1)
+          (car forms)
+          (progn
+            (append! (cadr forms) (list (car forms)))
+            (set forms (cdr forms))
+            (cons '->> forms)))))
+
+(defmacro -> (&rest forms)
+  (if (empty? forms)
+      nil
+      (if (= (len forms) 1)
+          (car forms)
+          (progn
+            ;; God this is jank
+            ;; Replace the second element
+            (rplaca! (cdr forms)
+                     (cons
+                       ;; Function call from 2nd element
+                       (car (cadr forms))
+                       (cons
+                         ;; First element
+                         (car forms)
+                         ;; Rest of 2nd element
+                         (cdr (cadr forms)))))
+            (set forms (cdr forms))
+            (cons '-> forms)))))
+
+;; TODO: better way of handling this, this looks up the key twice
+(defmacro def-persistent (key val)
+  `(if (defined? ,key) (env-get ,key) (def ,key ,val)))
+
+(defun nthcdr (lst n)
+  (progn
+    (dotimes n
+      (set lst (cdr lst)))
+    lst))

@@ -1,0 +1,2 @@
+(add-node (get-tree)
+  (gd-call __gd-tree__ "load" "res://todo_list/button.tscn"))

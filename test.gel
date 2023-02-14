@@ -1,0 +1,168 @@
+;; Debug only
+(defmacro assert-except (expr)
+  (let (failed (gensym))
+    `(assert (let (,failed false)
+               (try ,expr ex (set ,failed true))
+               ,failed))))
+
+(prn "--- BEGIN TESTS ---")
+
+;; Test reading ints correctly
+2147483647
+(assert-except (read-string "2147483648"))
+(assert-except (read-string "-2147483649"))
+-2147483648
+0
+
+;; Test overflows
+(assert-except (+ INT_MAX 1))
+(assert-except (- INT_MIN 1))
+
+;; Read a function that isn't in the namespace
+(assert-except (foo))
+
+(assert= (+ 2 2) 4)
+(assert= (- 2 2) 0)
+(assert= (* 5 5) 25)
+(assert= (// 6 2) 3)
+(assert= (// 3 2) 1)
+(assert= (len (list 1 2 3)) 3)
+(assert (cons? (cons 1 2)))
+(assert (not (cons? 5)))
+(assert (empty? nil))
+(assert (not (empty? 1)))
+(assert (not (empty? (list 1 2 3))))
+(def fib (fn (n) (if (< n 3) 1 (+ (fib (- n 1)) (fib (- n 2))))))
+(assert= (fib 6) 8)
+;; This is bad but can't properly test it yet
+(assert (not (empty? (mapcar (fn (x) (+ x 2)) (list 1 2 3)))))
+(assert (not (empty? (read-string "(+ 2 2)"))))
+(assert (not (empty? (quasiquote (1 2 3)))))
+(assert= 3 (last (quasiquote (1 2 (unquote (+ 1 2))))))
+
+;; Test macros
+(defmacro dr (body) (car body))
+(assert= (dr (4 5 6)) 4)
+(defmacro <<-1 (body) (concat (car body) (car (cdr body))))
+(<<-1 ((+) (2 2)))
+
+(list? '(1 2 3))
+
+(assert= (hash 'foobar) (hash 'foobar))
+(assert (not (= (hash 'foobar) (hash "foobar"))))
+(assert= (map-get (make-map 'foo 1 'bar 2) 'bar) 2)
+
+;; Test complex ht keys
+(assert= (map-get {'(1 2 3 (cons 4 5)) 2} '(1 2 3 (cons 4 5))) 2)
+
+(let (x 3) (assert= x 3) (set x 4) (assert= x 4))
+
+;; Test functions returning symbols
+(kind {'kind 'foo})
+
+;; Test dotimes
+(let (x 0)
+  (dotimes 10 (set x (+ x 1)))
+  (assert= x 10))
+
+;; Test for
+(let (x 0)
+  (for (y '(1 2 3 4 5)) (set x (+ x y)))
+  (assert= x 15))
+
+;; Test variable argument list
+(defun foo (a b &rest args) args)
+(assert= (len (foo 1 2 3 4 5)) 3)
+
+;; Test rplaca and rplacd
+(assert= (car (rplaca! (cons 4 5) 2)) 2)
+(assert= (cdr (rplacd! (cons 4 7) 5)) 5)
+
+;; Things passed into a function should not be evaluated
+(defun sub-func (quoted-stuff)
+  (assert (list? (car quoted-stuff))))
+
+(defmacro call-sub-func (stuff)
+  (sub-func stuff))
+
+(call-sub-func ((+ 2 2) (* 3)))
+
+;; Including with mapcar. Mapcar is implemented weirdly so
+;; we need to test it as well
+;; TODO: I don't understand why this works. mapcar calls apply, which should
+;; be eval'ing the quoted forms an additional time as currently implemented
+(mapcar (fn (x) (assert (list? x))) (list '(- 2 1) '(+ 0 1)))
+
+;; Test ->>
+(assert= (->>
+          (+ 2 2)
+          (* 2)
+          (- 1))
+         -7)
+
+(assert= (->
+          (+ 2 2)
+          (* 2)
+          (- 1))
+         7)
+
+(prn "Some stuff to test variadic arguments to prn: "
+     3
+     " and some more stuff: "
+     '(1  2 foobar))
+;; Broken because you can't escape quotes in strings
+(assert (str= "\"foo\"" (repr "foo")))
+
+;; Test progn with one or zero forms
+(progn (+ 2 2))
+(progn)
+(let (x 3))
+
+;; Test implicit progn on defun
+(def x 0)
+(defun f () (set x (+ x 1)) (set x (+ x 1)))
+(f)
+(assert= x 2)
+
+;; Test function names in flet
+(flet foo (x) (+ x 2)
+    (assert (str= "foo" (get-function-name foo))))
+
+;; Test implicit progn in flet
+(let (ctr 0)
+  (flet foobar (x) (+ x 2)
+        (set ctr (+ ctr 1))
+        (set ctr (+ ctr 1)))
+  (assert= ctr 2))
+
+(def-persistent *test-persistent* "foobar")
+
+;; Type compares
+(assert= "foo" "foo")
+(assert= true true)
+(assert= '(1 2 3) (cons 1 '(2 3)))
+(assert (not (= '(1 2 3) '(1 2))))
+
+(assert-except (gd-call "get_node" 1 2 3 4 5 6 7 8 9))
+
+;; Test ,@
+(assert= 4 (len `(+ 2 (splice-unquote '(2 2)))))
+(assert= 4 (len `(+ 2 ,@'(2 2))))
+
+;; Test +=, etc.
+(let (x 0)
+  (+= x 2)
+  (assert= x 2)
+  (-= x 1)
+  (assert= x 1))
+
+;; Test evaling an improper list
+(assert-except (eval (cons '+ (cons 2 2))))
+
+(assert (str= "foobar" (strcat "foo" "bar")))
+(assert (not (str= "foo" "bar")))
+(assert (str= "foo" "foo"))
+(assert (str=))
+(assert (str= "foo"))
+
+(prn "--- All tests finished. ---")
