@@ -8,6 +8,8 @@ class eval_error : public lisp_error { using lisp_error::lisp_error; };
 lref eval(lref env, lref input);
 lref apply(const lref& func, const lref& args, lref env);
 
+void global_env_set(const lref& key, const lref& value);
+
 // Structure that allows doing TCO with lref functions
 // TODO: think of a better name for this
 struct FnReturn : ILispFunction {
@@ -21,6 +23,7 @@ struct FnReturn : ILispFunction {
     return "<function " + name + " " + params->repr() + " " + body->repr()
       + ">";
   }
+  std::string type_string() const { return "function"; }
 };
 
 #endif

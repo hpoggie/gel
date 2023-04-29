@@ -106,6 +106,28 @@
           (- 1))
          7)
 
+;; Test to make sure -> doesn't mutate the code it's passed
+
+(def test-arrow-fuck-list `((,(fn () 2))))
+
+(defun test-arrow-fuck ()
+    (apply
+        (-> (car test-arrow-fuck-list)
+            (car))
+        (list)))
+
+(test-arrow-fuck)
+(test-arrow-fuck)
+
+(defun test-->>-mutate-code ()
+  (apply
+    (->> (car test-arrow-fuck-list)
+         (car))
+    (list)))
+
+(test-->>-mutate-code)
+(test-->>-mutate-code)
+
 (prn "Some stuff to test variadic arguments to prn: "
      3
      " and some more stuff: "
@@ -164,5 +186,39 @@
 (assert (str= "foo" "foo"))
 (assert (str=))
 (assert (str= "foo"))
+
+;; Test getting the type of things
+(assert (sym= (type nil) 'nil-type))
+(assert (sym= (type 1) 'int))
+(assert (sym= (type 'int) 'symbol))
+(assert (sym= (type (cons 1 2)) 'cons))
+(assert (sym= (type (list 1 2 3)) 'cons))
+(assert (sym= (type "foo") 'string))
+(assert (sym= (type true) 'bool))
+(assert (sym= (type {}) 'map))
+(assert (sym= (type type) 'builtin-function))
+(assert (sym= (type (fn (x) (+ x 1))) 'function))
+
+;; Test apply with builtin and user functions
+(assert= (apply + '(2 2)) 4)
+(assert= (apply not '(false)) true)
+
+(assert (== 2 2))
+(assert (== 2 2))
+(assert (== "foo" "foo"))
+(assert (not (== "foo" "bar")))
+
+(assert= (let (x 3 y 4) (+ x y)) 7)
+(assert= (let (x 1 y 2 z 3) (+ x y z)) 6)
+;; Trust me, we do need to check for this
+(assert= (let (x 1 y 2 &rest 3) x) 1)
+(assert-except (let (x 1 y 2 &rest z 3 4 5) x))
+
+(assert (is-builtin? '+))
+(assert (is-builtin? 'car))
+(assert (not (is-builtin? 'defun)))
+
+(assert (not (empty? (env-get (car '(+))))))
+(assert (defined? (car '(+))))
 
 (prn "--- All tests finished. ---")

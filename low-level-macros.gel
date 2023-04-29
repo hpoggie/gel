@@ -1,0 +1,13 @@
+(-def-internal! 'def (fn (key value)
+  `(-def-internal! ',key ,value)))
+
+(-make-macro! def)
+(set-function-name! def "def")
+
+(def defmacro (fn (name arglist &rest body)
+  `(progn (def ,name (fn ,arglist ,@body))
+          (set-function-name! ,name (repr ',name))
+          (-make-macro! ,name))))
+
+(set-function-name! defmacro "defmacro")
+(-make-macro! defmacro)

@@ -5,6 +5,7 @@
 #include "evaluator.h"
 #include "repl.h"
 #include "reader.h"
+#include "vm.h"
 
 void check_num_args(const lref& arglist, int size) {
   if (len(arglist) != size) {
@@ -351,6 +352,35 @@ LispFunction* _throw = new LispFunction([](lref args) -> lref {
 
 
 lref repl_env = std::shared_ptr<Map>(new Map({
+    {"-def-internal!", new LispFunction([](lref args) -> lref {
+      check_num_args(args, 2);
+
+      auto arg1 = std::dynamic_pointer_cast<Symbol>(car(args));
+      auto arg2 = cadr(args);
+      if (arg1.get() == nullptr || arg2.get() == nullptr) {
+        throw eval_error("Bad values passed to def: "
+                         + try_repr(arg1) + " " + try_repr(arg2));
+      }
+
+      global_env_set(arg1, arg2);
+      return arg2;
+    })},
+    {"-make-macro!", new LispFunction([](lref args) -> lref {
+      check_num_args(args, 1);
+
+      auto arg = std::dynamic_pointer_cast<FnReturn>(car(args));
+      if (arg.get() == nullptr) {
+        throw eval_error("Argument is not a function: "
+                         + try_repr(arg));
+      }
+
+      if (arg->is_macro) {
+        throw eval_error("Argument is already a macro.");
+      }
+
+      arg->is_macro = true;
+      return arg;
+    })},
     {"+", plus},
     {"-", minus},
     {"*", mult},
@@ -397,6 +427,10 @@ lref repl_env = std::shared_ptr<Map>(new Map({
     {"last", _last},
     {"tail", _tail},
     {"copy-list", _copy_list},
+    {"reversed", new LispFunction([](lref args) -> lref {
+      check_num_args(args, 1);
+      return reversed(car(args));
+    })},
     {"hash", _hash},
     {"make-map", make_map},
     {"map-get", _map_get},
@@ -480,7 +514,32 @@ lref repl_env = std::shared_ptr<Map>(new Map({
       }
 
       return True;
-    })}
+    })},
+    {"type", new LispFunction([](lref args) {
+      check_num_args(args, 1);
+      auto obj = car(args);
+      if (obj == Nil) {
+        return std::make_shared<Symbol>("nil-type");
+      }
+      return std::make_shared<Symbol>(obj->type_string());
+    })},
+    {"assemble", new LispFunction([](lref args) {
+      check_num_args(args, 1);
+      return std::make_shared<Bytecode>(assemble(car(args)));
+    })},
+    {"run-bytecode", new LispFunction([](lref args) {
+      check_num_args(args, 1);
+      return run_bytecode(car(args));
+    })},
+    {"is-builtin?", new LispFunction([](lref args) {
+      check_num_args(args, 1);
+      auto sym = std::dynamic_pointer_cast<Symbol>(car(args));
+      if (sym == nullptr) {
+        throw lisp_error("Argument is not a symbol.");
+      }
+
+      return map_get(repl_env, sym) != Nil ? True : False;
+    })},
   }));
 
 lref current_env = cons(repl_env, Nil);

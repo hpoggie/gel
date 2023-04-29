@@ -1,0 +1,18 @@
+(defun compile-form (form)
+  (let (ret nil code form)
+    (if (is-builtin? (car code))
+        (progn
+          (set ret (cons `(CALL_BUILTIN ,(env-get (car code))) ret))
+          (set code (cdr code)))
+        nil)
+    (for (elt code)
+         (if (cons? elt)
+             (set ret (concat (concat (compile-form elt) `((CONS ()))) ret))
+             (set ret (cons `(PUSH ,elt) (cons `(CONS ()) ret)))))
+    (set ret (cons `(PUSH ,nil) ret))
+    ret))
+
+(defun compile (code)
+  (if (list? code)
+      (compile-form code)
+    `(PUSH ,code)))

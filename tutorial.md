@@ -2,6 +2,8 @@
 
 ## First of all.
 
+- [ ] TODO: this is out of date. Use SCons
+
 You need to get set up with an actual copy of the executable, obviously, or you
 won't be able to do any programming. Currently this means you will need to build
 it from source.
@@ -104,82 +106,38 @@ to combine `bar` and `baz` into one expression. What you need is `progn`:
 `progn` takes any number of arguments, evaluates them, and returns the 
 result of evaluating the last one. Very handy.
 
-## Parens
-
-You may have noticed a lot of parentheses in the above code. If so, well 
-done. You get a star.
-
-Often this abundance of parens can be impractical, so gel provides another 
-way of notating s-expressions:
-
-```
-dotimes 10
-  (prn "Hello!")  ;; Prints "Hello!" 10 times
-```
-
-Gel implicitly parenthesizes indented code so that the first line before an
-indented block is part of the same expression as that block. In other words, 
-the line before the start of the block gets a ( at the beginning, and the 
-last line of the block gets a ) at the end.
-
-For example,
-
-```
-progn
-  (prn "Hello!")
-  (prn "foo")
-  (prn "bar")
-```
-
-to gel, reads as:
-
-```
-(progn
-  (prn "Hello!")
-  (prn "foo"
-  (prn "bar"))
-```
-
 ## Local Variables
 
 In gel, the scope of a local variable is defined by a `let` block:
 
 ```
-let (x 10)
-  (prn x)  ;; Prints 10
+(let (x 10)
+  (prn x))  ;; Prints 10
 ```
 
-They can be modified using `set!`
+They can be modified using `set`.
 
 ```
-let (x 10)
-  progn
+(let (x 10)
+  (progn
     (prn x)  ;; Prints 10
-    (set! x 42)
-    (prn x)  ;; Prints 42
+    (set x 42)
+    (prn x)))  ;; Prints 42
 ```
-
-By convention, any function (or special symbol or macro - don't worry, we'll get
-there) that modifies state has an `!` after it. That's to let you know we're
-doing serious programming here. Mutating state is often necessary, but it can
-also be dangerous, so it's good to know when you're doing it. The `!` convention
-makes this easier.
 
 ## Global Variables
 
-... are defined using `def!`.
+... are defined using `def`.
 
 ```
-(def! *x* 3)
-(set! *x* 4)
+(def *x* 3)
+(set *x* 4)
 (prn *x*)  ;; Prints 4
 ```
 
 Pretty simple.
 
-By convention, global variables have `*earmuffs*`. This is for a similar reason
-to the `!` convention - if we're using a global variable, we want people to know
-it.
+By convention, global variables have `*earmuffs*`. If we're using a global variable, we want people to know it.
 
 ## Functions
 
@@ -232,15 +190,14 @@ You can use this to fake a loop:
 
 ```
 ;; Print the perfect squares up to max
-defun! squares (max)
-  let (f
-    fn (i)
-      if (> i max)
-        nil
-        progn
-          (prn (* i i))
-          (f (+ i 1)))
-    (f 1)
+(defun! squares (max)
+  (let (f (fn (i)
+            (if (> i max)
+                nil
+                (progn
+                  (prn (* i i))
+                  (f (+ i 1))))))
+    (f 1)))
 ```
 
 One-line version for easy copy-pasting into the REPL:
@@ -273,18 +230,21 @@ functions but work a bit differently. These things are called special symbols,
 and they make up the core of the language. They are:
 
 ```
-def!
-defmacro! - create a macro
+def
+defined?
+env-get - used for GEL implementation, you don't need to worry about this
+defmacro - create a macro
 let
-set!
+set
 progn
 if
 fn
 quote - don't evaluate this
 quasiquote - don't evaluate any part of this unless I unquote it
-unquote - actually, evaluate this
-macroexpand - recursively expand a macro
+unquote - actually, do evaluate this
+macroexpand - show me what this macro expands to
 try - Do this thing, but look out for exceptions
+apply - pass a list as the arguments to a function
 ```
 
 Looking at this, you can see we're already done with the basics of gel. The only

@@ -1,0 +1,8 @@
+(load-file "gel/low-level-macros.gel")
+(load-file "gel/stdlib.gel")
+(load-file "gel/console.gel")
+(load-file "gel/compiler.gel")
+(load-file "gel/test-assembler.gel")
+(load-file "gel/test-compiler.gel")
+
+(prn "boot.gel loaded.")

@@ -14,7 +14,7 @@
   (let (func (gensym))
     `(let (,func ,(cons 'fn (cons arglist body)))
        (def ,name ,func)
-       (set-function-name! ,func (repr ,name)))))
+       (set-function-name! ,func (repr ',name)))))
 
 (defun not (a) (if a false true))
 (defun >= (a b) (not (< a b)))
@@ -30,14 +30,12 @@
 ;; This is weird because we only want to eval lhs and rhs once, since they
 ;; might have side effects
 (defmacro assert= (lhs rhs)
-  (let (val1 (gensym))
-    (let (val2 (gensym))
-      `(let (,val1 ,lhs)
-         (let (,val2 ,rhs)
+  (let (val1 (gensym) val2 (gensym))
+    `(let (,val1 ,lhs ,val2 ,rhs)
             (if (= ,val1 ,val2) nil
               (progn
                 (prn "Assertion Failed: " (quote ,lhs) " is not equal to " (quote ,rhs))
-                (prn "    Values: " ,val1 " is not equal to " ,val2))))))))
+                (prn "    Values: " ,val1 " is not equal to " ,val2))))))
 
 (defun and (a b) (if a (if b true false) false))
 (defun or (a b) (if a true (if b true false)))
@@ -76,43 +74,70 @@
 (defun kind (error) (map-get error 'kind))
 
 (defun append! (lst obj) (rplacd! (tail lst) obj))
+(defun append (lst obj)
+  (let (new-lst (copy-list lst))
+    (append! new-lst obj)
+    new-lst))
 
 (defmacro ->> (&rest forms)
   (if (empty? forms)
       nil
       (if (= (len forms) 1)
           (car forms)
-          (progn
-            (append! (cadr forms) (list (car forms)))
-            (set forms (cdr forms))
-            (cons '->> forms)))))
+        (cons '->> (cons (append (cadr forms) (list (car forms))) (cddr forms))))))
 
 (defmacro -> (&rest forms)
   (if (empty? forms)
       nil
-      (if (= (len forms) 1)
-          (car forms)
-          (progn
-            ;; God this is jank
-            ;; Replace the second element
-            (rplaca! (cdr forms)
-                     (cons
+    (if (= (len forms) 1)
+        (car forms)
+      ;; God this is jank
+      ;; Replace the second element
+      (cons '-> (cons (cons
                        ;; Function call from 2nd element
                        (car (cadr forms))
                        (cons
-                         ;; First element
-                         (car forms)
-                         ;; Rest of 2nd element
-                         (cdr (cadr forms)))))
-            (set forms (cdr forms))
-            (cons '-> forms)))))
+                        ;; First element
+                        (car forms)
+                        ;; Rest of 2nd element
+                        (cdr (cadr forms))))
+                      (cddr forms))))))
 
 ;; TODO: better way of handling this, this looks up the key twice
 (defmacro def-persistent (key val)
-  `(if (defined? ,key) (env-get ,key) (def ,key ,val)))
+  `(if (defined? ',key) (env-get ',key) (def ,key ,val)))
 
 (defun nthcdr (lst n)
   (progn
     (dotimes n
       (set lst (cdr lst)))
     lst))
+
+(defun nth (lst n) (car (nthcdr lst n)))
+
+(defun sym= (s1 s2) (str= (repr s1) (repr s2)))
+
+;; Object system
+
+(def __METHOD_TABLE__ {})
+
+;; TODO: this is probably still broken in some way
+(defmacro defmethod (method-name objtype params &rest body)
+  (let (instance (gensym) args (gensym) type-table (gensym))
+    `(progn
+        ;; Make sure the function that looks up the method to call is defined
+        (if (defined? ',method-name) nil
+            (defun ,method-name (,instance &rest ,args)
+            (-> (map-get __METHOD_TABLE__ ',method-name)
+                (map-get (type ,instance))
+                (apply (cons ,instance ,args)))))
+        ;; TODO: can't just make a variable that points to the map, it gets copied
+        ;; Find a better way to do this
+        ;; Probably don't want to go all in on immutability since that's not super gamedev friendly
+        (let (,type-table (map-get __METHOD_TABLE__ ',method-name))
+            (if ,type-table nil (map-set __METHOD_TABLE__ ',method-name {}))
+            (map-set (map-get __METHOD_TABLE__ ',method-name) ,objtype (fn ,params ,@body))))))
+
+(defmethod == 'int (obj1 obj2) (= obj1 obj2))
+(defmethod == 'string (obj1 obj2) (str= obj1 obj2))
+(defmethod == 'symbol (obj1 obj2) (sym= obj1 obj2))

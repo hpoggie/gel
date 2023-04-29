@@ -29,6 +29,7 @@ struct list_error : public lisp_error { using lisp_error::lisp_error; };
 struct LispObject {
   virtual std::string repr() const { return "()"; }
   virtual std::string str() const { return this->repr(); }
+  virtual std::string type_string() const { return "object"; }
   void print() const { std::cout << this->repr(); }
   virtual bool equals(const lref& other) const { return this == other.get(); }
 
@@ -46,6 +47,7 @@ struct LispInt : LispObject {
 
   LispInt(int val) { this->val = val; }
   std::string repr() const { return std::to_string(val); }
+  std::string type_string() const { return "int"; }
 
   bool equals(const lref& other) const {
     auto ot = std::dynamic_pointer_cast<LispInt>(other);
@@ -79,6 +81,7 @@ struct Symbol : LispObject {
 
   Symbol(std::string name) { this->name = name; }
   std::string repr() const { return name; }
+  std::string type_string() const { return "symbol"; }
 };
 
 struct Cons : LispObject {
@@ -91,6 +94,7 @@ struct Cons : LispObject {
   }
 
   std::string repr() const;
+  std::string type_string() const { return "cons"; }
   bool equals(const lref& other) const {
     auto other_cons = std::dynamic_pointer_cast<Cons>(other);
     if (other_cons == nullptr) {
@@ -113,6 +117,7 @@ struct String : LispObject {
   String(std::string value) { this->value = value; }
   std::string repr() const { return "\"" + value + "\""; }
   std::string str() const { return value; }
+  std::string type_string() const { return "string"; }
   bool equals(const lref& other) const {
     auto ot = std::dynamic_pointer_cast<String>(other);
     return ot != nullptr && value == ot.get()->value;
@@ -129,6 +134,7 @@ struct Bool : LispObject {
 
   Bool(bool value) { this->value = value; }
   std::string repr() const { return (value ? "true" : "false"); }
+  std::string type_string() const { return "bool"; }
 };
 
 // Have to declare this here because C++ is dumb
@@ -166,6 +172,7 @@ struct Map : LispObject {
   }
 
   std::string repr() const;
+  std::string type_string() const { return "map"; }
 
   void set(lref key, lref value) {
     this->value[key] = value;
@@ -191,10 +198,13 @@ struct LispFunction : ILispFunction {
 
   LispFunction(_lisp_function value) { this->value = value; }
   std::string repr() const { return "<function>"; }
+  std::string type_string() const { return "builtin-function"; }
   lref operator()(lref args) { return this->value(args); }
 };
 
-struct MaybeError : LispObject {};
+struct MaybeError : LispObject {
+  std::string type_string() const { return "maybe-error"; }
+};
 
 struct Error : MaybeError {
   std::string desc;
@@ -203,6 +213,7 @@ struct Error : MaybeError {
   std::string repr() const {
     return "Error: " + desc;
   }
+  std::string type_string() const { return "error"; }
 };
 
 struct NonError : MaybeError {
@@ -212,6 +223,7 @@ struct NonError : MaybeError {
   std::string repr() const {
     return "Wrapped: " + (wrapped.get() != nullptr ? wrapped->repr() : "NULL");
   };
+  std::string type_string() const { return "non-error"; }
 };
 
 lref cons(const lref& car, const lref& cdr);

@@ -26,23 +26,18 @@ void rep(const char* const input) {
 
 int main() {
   // Default env
-  try {
-    re("(def load-file (fn (path) (eval (read-string \"(progn \n\" (slurp path) \"\nnil)\"))))");
-    re("(load-file \"stdlib.gel\")");
-  } catch (const lisp_error& e) {
-    std::cout << "Interpreter setup failed with error: " << e.value.get()->repr() << std::endl\
-	    << "Exiting." << std::endl;
-  }
+  re("(def! load-file (fn (path) (eval (read-string \"(progn \n\" (slurp path) \"\nnil)\"))))");
+  re("(load-file \"stdlib.gel\")");
 
   std::string inp;
   while (!std::cin.eof()) {
     std::cout << "gel> ";
     getline(std::cin, inp);
-    try {
+    //try {
       rep(inp.c_str());
-    } catch (const lisp_error& e) {
-      std::cout << "Unhandled error: " << e.value.get()->repr() << std::endl;
-    }
+    //} catch (const lisp_error& e) {
+      //std::cout << "Unhandled error: " << e.value.get()->repr() << std::endl;
+    //}
   }
 
   return 0;

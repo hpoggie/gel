@@ -1,8 +1,15 @@
 #include "evaluator.h"
 #include "builtin.h"
+#include "reader.h"
+
+bool Gel_in_debugger = false;
 
 void env_set(const lref& env, const lref& key, const lref& value) {
   map_set(car(env), key, value);
+}
+
+void global_env_set(const lref& key, const lref& value) {
+  env_set(current_env, key, value);
 }
 
 lref env_find(const lref& key, const lref& env_cons) {
@@ -129,6 +136,31 @@ lref bind(lref func, lref args, lref env) {
   return env;
 }
 
+lref bind_let_params(lref bindings, lref args, lref env) {
+  auto new_env = std::make_shared<Map>();
+  env = cons(new_env, env);
+
+  lref current_binding = bindings;
+  lref current_arg = args;
+  for (;; current_binding = cdr(current_binding), current_arg = cdr(current_arg)) {
+    if (current_binding == Nil && current_arg != Nil) {
+      throw eval_error("Too many bindings: " + try_repr(bindings)\
+                       + ": " + try_repr(args));
+    }
+    if (current_binding != Nil && current_arg == Nil) {
+      throw eval_error("Too few bindings: " + try_repr(bindings)\
+                       + ": " + try_repr(args));
+    }
+    if (current_binding == Nil) {
+      break;
+    }
+
+    env_set(env, car(current_binding), car(current_arg));
+  }
+
+  return env;
+}
+
 lref bind_without_evaluating(lref func, lref args, lref env) {
   auto fn_return = std::dynamic_pointer_cast<FnReturn>(func).get();
   if (fn_return == nullptr) {
@@ -211,8 +243,35 @@ lref macroexpand(lref ast, const lref& env) {
   return ast;
 }
 
-lref eval(lref env, lref input) {
+lref eval(lref env, lref input, bool debug_command) {
   while (true) {
+    if (Gel_in_debugger && !debug_command) {
+      std::string inp;
+      std::cout << "geldb λ ";
+      getline(std::cin, inp);
+      try {
+        std::cout << eval(env, read(inp.c_str()), true)->repr() << std::endl;
+        if (!Gel_in_debugger) {
+          std::cout << "Resuming..." << std::endl;
+          return Nil;
+        }
+      } catch (const lisp_error& e) {
+        auto val = e.value.get();
+        if (val == nullptr) {
+            std::cout << "Unknown error. Value of lisp_error was Nil."
+                        << " This should never happen."
+                        << std::endl;
+            return Nil;
+        }
+
+        std::cout << "Unhandled error: "
+                    << val->repr()
+                    << std::endl
+                    << e.stack_trace.get()->str();
+      }
+      continue;
+    }
+
     if (input.get() == nullptr) {
       // If there's nothing left to evaluate, quit
       std::cout << "bye" << std::endl;
@@ -244,23 +303,22 @@ lref eval(lref env, lref input) {
       throw eval_error("First argument of " + input->repr() + " is not a symbol. Can't eval.");
     }
 
-    if (special_symbol->name == "def") {
-      check_num_args(args, 2);
+    if (special_symbol->name == "break") {
+      Gel_in_debugger = true;
+      continue;
+    }
 
-      auto arg1 = std::dynamic_pointer_cast<Symbol>(car(args));
-      auto arg2 = cadr(args);
-      if (arg1.get() == nullptr || arg2.get() == nullptr) {
-        throw eval_error("Bad values passed to def: "
-                         + try_repr(arg1) + " " + try_repr(arg2));
-      }
-      auto evald = eval(env, arg2);
-      env_set(current_env, arg1, evald);
-      return evald;
+    if (special_symbol->name == "resume") {
+      Gel_in_debugger = false;
+      return Nil;
     }
 
     if (special_symbol->name == "defined?") {
       check_num_args(args, 1);
-      auto sym = std::dynamic_pointer_cast<Symbol>(car(args));
+
+      auto evald = eval(env, car(args));
+
+      auto sym = std::dynamic_pointer_cast<Symbol>(evald);
       if (sym == nullptr) {
         throw lisp_error("First argument to env-get is not a symbol.");
       }
@@ -270,7 +328,10 @@ lref eval(lref env, lref input) {
 
     if (special_symbol->name == "env-get") {
       check_num_args(args, 1);
-      auto sym = std::dynamic_pointer_cast<Symbol>(car(args));
+
+      auto evald = eval(env, car(args));
+
+      auto sym = std::dynamic_pointer_cast<Symbol>(evald);
       if (sym == nullptr) {
         throw lisp_error("First argument to env-get is not a symbol.");
       }
@@ -284,32 +345,21 @@ lref eval(lref env, lref input) {
       return val;
     }
 
-    if (special_symbol->name == "defmacro") {
-      auto name = std::dynamic_pointer_cast<Symbol>(car(args));
-      auto bindings = cadr(args);
-      auto body = cddr(args);
-      if (name.get() == nullptr
-          || bindings.get() == nullptr
-          || body.get() == nullptr) {
-        throw eval_error("Bad values passed to defmacro: name "
-                         + try_repr(name)
-                         + " bindings " + try_repr(bindings)
-                         + " body " + try_repr(body));
+    if (special_symbol->name == "let") {
+      //auto new_env = std::make_shared<Map>();
+      //env = cons(new_env, env);
+      auto bindings = cadr(input);
+
+      auto binding_names = Nil;
+      auto binding_values = Nil;
+      for (auto p = bindings; p != Nil; p = cddr(p)) {
+        binding_names = cons(car(p), binding_names);
+        binding_values = cons(eval(env, cadr(p)), binding_values);
       }
 
-      auto fn = std::make_shared<FnReturn>(body, bindings, env);
-      fn->is_macro = true;
-      
-      env_set(env, name, fn);
-      return fn;
-    }
-
-    if (special_symbol->name == "let") {
-      auto new_env = std::make_shared<Map>();
-      env = cons(new_env, env);
-      auto bindings = cadr(input);
       auto body = cddr(input);
-      env_set(env, car(bindings), eval(env, cadr(bindings)));
+      //env_set(env, car(bindings), eval(env, cadr(bindings)));
+      env = bind_let_params(binding_names, binding_values, env);
 
       // Implicit progn
       if (body == Nil) {
@@ -396,6 +446,32 @@ lref eval(lref env, lref input) {
       }
     }
 
+    // Same as normal evaluation but with a list
+    if (special_symbol->name == "apply") {
+      check_num_args(args, 2);
+      auto func = eval(env, car(args));
+      auto arglist = eval(env, cadr(args));
+      auto as_fn_return = std::dynamic_pointer_cast<FnReturn>(func).get();
+      if (as_fn_return != nullptr) {
+        // Set up a new env using the bindings
+        env = bind_without_evaluating(func, arglist, env);
+
+        // Eval the body of the function
+        if (cdr(as_fn_return->body) != Nil) {
+          eval_ast(env, butlast(as_fn_return->body));
+        }
+        input = last(as_fn_return->body);
+        continue;
+      }
+
+      auto as_lisp_function = std::dynamic_pointer_cast<LispFunction>(func).get();
+      if (as_lisp_function != nullptr) {
+        return as_lisp_function->value(arglist);
+      }
+
+      throw eval_error("Can't apply something that isn't a function.");
+    }
+
     // If it wasn't a special form, eval it normally
     auto evald = eval_ast(env, input);
 
@@ -430,4 +506,8 @@ lref eval(lref env, lref input) {
     // TODO: handle improper list
     return function->value(cdr(evald));
   }
+}
+
+lref eval(lref env, lref input) {
+  return eval(env, input, false);
 }
