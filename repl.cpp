@@ -26,8 +26,14 @@ void rep(const char* const input) {
 
 int main() {
   // Default env
-  re("(def! load-file (fn (path) (eval (read-string \"(progn \n\" (slurp path) \"\nnil)\"))))");
-  re("(load-file \"stdlib.gel\")");
+  //re("(def! load-file (fn (path) (eval (read-string \"(progn \n\" (slurp path) \"\nnil)\"))))");
+  //re("(load-file \"stdlib.gel\")");
+
+  // Make a new env for user stuff so is-builtin? will work
+  current_env = cons(std::make_shared<Map>(), current_env);
+
+  re("(-def-internal! 'load-file (fn (path) (eval (read-string \"(progn \n\" (slurp path) \"\nnil)\"))))");
+  re("(load-file \"boot.gel\")");
 
   std::string inp;
   while (!std::cin.eof()) {
