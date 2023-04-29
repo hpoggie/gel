@@ -1,7 +1,17 @@
+# eventually add back -fsanitize=undefined; right now it doesn't seem to work
+# on nixos
+CFLAGS=-c -g
+SOURCES=repl.cpp types.cpp reader.cpp evaluator.cpp builtin.cpp vm.cpp stacktrace.cpp
+OBJECTS=$(SOURCES:.cpp=.o)
+
 all: repl
 
-repl: repl.cpp types.cpp reader.cpp evaluator.cpp builtin.cpp vm.cpp stacktrace.cpp
-	g++ -g repl.cpp types.cpp reader.cpp evaluator.cpp builtin.cpp vm.cpp stacktrace.cpp -o gel -fsanitize=undefined
+repl: $(OBJECTS)
+	g++ $(OBJECTS) -o gel
+
+# $@ is the name of the target being generated, and $< the first prerequisite
+.cpp.o:
+	g++ $(CFLAGS) $< -o $@
 
 clean:
 	rm gel
