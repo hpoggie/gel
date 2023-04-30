@@ -15,21 +15,13 @@ std::string Instruction::repr() const {
 
 Opcode sym_to_opcode(lref sym) {
     auto s = std::dynamic_pointer_cast<Symbol>(sym)->name;
-    if (s == "PUSH") {
-        return Opcode::PUSH;
-    } else if (s == "CONS") {
-        return Opcode::CONS;
-    } else if (s == "CALL_BUILTIN") {
-        return Opcode::CALL_BUILTIN;
-    } else if (s == "CALL") {
-        return Opcode::CALL;
-    } else if (s == "RET") {
-        return Opcode::RET;
-    } else if (s == "POP") {
-        return Opcode::POP;
-    } else {
-        throw assembler_error("Bad opcode name: " + s);
+    for (int i = 0; i < (int)Opcode::NUM_OPCODES; i++) {
+        if (s == opcode_names[i]) {
+            return (Opcode)i;
+        }
     }
+
+    throw assembler_error("Bad opcode name: " + s);
 }
 
 std::vector<Instruction> assemble(lref lst) {
@@ -147,6 +139,22 @@ lref run_bytecode(const lref& block) {
             case Opcode::POP:
                 // TODO: clean up the ref?
                 stack_size--;
+                break;
+            case Opcode::JEQ:
+            {
+                auto addr = std::dynamic_pointer_cast<LispInt>(current_block->code[pc].operand);
+                if (addr == nullptr) {
+                    throw vm_error("Jump address is null.");
+                }
+                if (addr < 0) {
+                    throw vm_error("Jump address is < 0.");
+                }
+                auto arg1 = stack[stack_size - 1];
+                auto arg2 = stack[stack_size - 2];
+                if (arg1->equals(arg2)) {
+                    pc = (unsigned long)(addr.get());
+                }
+            }
                 break;
             default:
                 throw vm_error("Unrecognized opcode.");

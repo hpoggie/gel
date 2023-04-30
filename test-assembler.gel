@@ -35,3 +35,13 @@
     (prn "Function to call:")
     (prn test-code-func)
     (prn (run-bytecode test-code))))
+
+(let (test-code (assemble `((PUSH 2)
+                            (PUSH 2)
+                            (JEQ 5)
+                            (PUSH "This should be skipped")
+                            (CALL_BUILTIN ,prn)
+                            (CALL_BUILTIN ,+))))
+  (prn "Running test bytecode:")
+  (prn test-code)
+  (prn (run-bytecode test-code)))
