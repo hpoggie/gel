@@ -158,7 +158,8 @@ lref run_bytecode(const lref& block) {
                 }
                 auto arg1 = stack[--stack_size];
                 if (arg1 != Nil && arg1 != False) {
-                    pc = (unsigned long)(addr.get());
+                    // -1 because we're about to increment it
+                    pc = (unsigned long)(addr->val) - 1;
                 }
             }
                 break;
