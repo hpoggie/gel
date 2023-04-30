@@ -27,7 +27,14 @@ Opcode sym_to_opcode(lref sym) {
 std::vector<Instruction> assemble(lref lst) {
     std::vector<Instruction> bytecode;
     while (lst != Nil) {
-        bytecode.push_back(Instruction(sym_to_opcode(car(car(lst))), cadr(car(lst))));
+        if (len(car(lst)) == 1) {
+            bytecode.push_back(Instruction(sym_to_opcode(car(car(lst))), Nil));
+        } else if (len(car(lst)) == 2) {
+            bytecode.push_back(Instruction(sym_to_opcode(car(car(lst))), cadr(car(lst))));
+        } else {
+            throw assembler_error("Bad number of arguments in opcode: " + try_repr(car(lst))
+                                  + "; Expected 0 or 1");
+        }
         lst = cdr(lst);
     }
     return bytecode;
