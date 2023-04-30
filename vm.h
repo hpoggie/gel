@@ -12,7 +12,7 @@ CALL_BUILTIN,
 CALL,
 RET,
 POP,
-JEQ,
+JIF,
 NUM_OPCODES
 };
 
@@ -23,7 +23,7 @@ const std::string opcode_names[(unsigned long)Opcode::NUM_OPCODES] = {
     "CALL",
     "RET",
     "POP",
-    "JEQ",
+    "JIF",
 };
 
 struct Instruction : LispObject {

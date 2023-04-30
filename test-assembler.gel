@@ -38,7 +38,7 @@
 
 (let (test-code (assemble `((PUSH 2)
                             (PUSH 2)
-                            (JEQ 5)
+                            (JIF 5)
                             (PUSH "This should be skipped")
                             (CALL_BUILTIN ,prn)
                             (CALL_BUILTIN ,+))))

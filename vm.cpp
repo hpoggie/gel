@@ -147,7 +147,7 @@ lref run_bytecode(const lref& block) {
                 // TODO: clean up the ref?
                 stack_size--;
                 break;
-            case Opcode::JEQ:
+            case Opcode::JIF:
             {
                 auto addr = std::dynamic_pointer_cast<LispInt>(current_block->code[pc].operand);
                 if (addr == nullptr) {
@@ -156,9 +156,8 @@ lref run_bytecode(const lref& block) {
                 if (addr < 0) {
                     throw vm_error("Jump address is < 0.");
                 }
-                auto arg1 = stack[stack_size - 1];
-                auto arg2 = stack[stack_size - 2];
-                if (arg1->equals(arg2)) {
+                auto arg1 = stack[--stack_size];
+                if (arg1 != Nil && arg1 != False) {
                     pc = (unsigned long)(addr.get());
                 }
             }
