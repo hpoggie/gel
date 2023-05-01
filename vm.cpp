@@ -163,6 +163,18 @@ lref run_bytecode(const lref& block) {
                 }
             }
                 break;
+            case Opcode::JMP:
+            {
+                auto addr = std::dynamic_pointer_cast<LispInt>(current_block->code[pc].operand);
+                if (addr == nullptr) {
+                    throw vm_error("Jump address is null.");
+                }
+                if (addr < 0) {
+                    throw vm_error("Jump address is < 0.");
+                }
+                pc = (unsigned long)(addr->val) - 1;
+            }
+                break;
             default:
                 throw vm_error("Unrecognized opcode.");
                 break;
