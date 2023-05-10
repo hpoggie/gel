@@ -313,19 +313,6 @@ lref eval(lref env, lref input, bool debug_command) {
       return Nil;
     }
 
-    if (special_symbol->name == "defined?") {
-      check_num_args(args, 1);
-
-      auto evald = eval(env, car(args));
-
-      auto sym = std::dynamic_pointer_cast<Symbol>(evald);
-      if (sym == nullptr) {
-        throw lisp_error("First argument to env-get is not a symbol.");
-      }
-
-      return env_get(env, sym) != nullptr ? True : False;
-    }
-
     if (special_symbol->name == "env-get") {
       check_num_args(args, 1);
 

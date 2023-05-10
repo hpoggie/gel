@@ -9,6 +9,7 @@ lref eval(lref env, lref input);
 lref apply(const lref& func, const lref& args, lref env);
 
 void global_env_set(const lref& key, const lref& value);
+lref env_get(const lref& env, const lref& key);
 
 // Structure that allows doing TCO with lref functions
 // TODO: think of a better name for this

@@ -540,6 +540,15 @@ lref repl_env = std::shared_ptr<Map>(new Map({
 
       return map_get(repl_env, sym) != Nil ? True : False;
     })},
+    {"defined?", new LispFunction([](lref args) {
+      check_num_args(args, 1);
+      auto sym = std::dynamic_pointer_cast<Symbol>(car(args));
+      if (sym == nullptr) {
+        throw lisp_error("Argument is not a symbol.");
+      }
+
+      return env_get(current_env, sym) != nullptr ? True : False;
+    })},
   }));
 
 lref current_env = cons(repl_env, Nil);
