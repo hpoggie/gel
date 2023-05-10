@@ -179,6 +179,12 @@ lref bind_without_evaluating(lref func, lref args, lref env) {
                        + ": " + try_repr(args));
     }
     if (current_binding != Nil && current_arg == Nil) {
+      auto as_sym = std::dynamic_pointer_cast<Symbol>(car(current_binding)).get();
+      if (as_sym != nullptr && as_sym->name == "&rest") {
+        env_set(env, cadr(current_binding), current_arg);
+        return env;
+      }
+
       throw eval_error("Too few arguments to function: " + try_repr(func)\
                        + ": " + try_repr(args));
     }
@@ -349,20 +355,6 @@ lref eval(lref env, lref input, bool debug_command) {
 
       map_set(l_env, car(args), eval(env, cadr(args)));
       input = cadr(args);
-      continue;
-    }
-
-    if (special_symbol->name == "progn") {
-      if (cdr(input) == Nil) {
-        input = Nil;
-        continue;
-      }
-
-      // Eval everything but the last form, throw the results away
-      eval_ast(env, butlast(cdr(input)));
-
-      // Do TCO with the last form
-      input = last(input);
       continue;
     }
 
