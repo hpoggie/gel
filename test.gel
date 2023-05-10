@@ -89,9 +89,10 @@
 
 ;; Including with mapcar. Mapcar is implemented weirdly so
 ;; we need to test it as well
-;; TODO: I don't understand why this works. mapcar calls apply, which should
-;; be eval'ing the quoted forms an additional time as currently implemented
-(mapcar (fn (x) (assert (list? x))) (list '(- 2 1) '(+ 0 1)))
+(mapcar (fn (x) (progn (assert (list? x))
+                       ;; Need this other check b/c there was a bug where mapcar called
+                       ;; eval_ast on things passed into the function it was mapping
+                       (assert (is-builtin? (car x))))) (list '(- 2 1) '(+ 0 1)))
 
 ;; Test ->>
 (assert= (->>

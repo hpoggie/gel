@@ -212,7 +212,7 @@ lref apply(const lref& func, const lref& args, lref env) {
                      + "Can't apply something that isn't a function. Also can't apply builtins.");
   }
 
-  env = bind(func, args, env);
+  env = bind_without_evaluating(func, args, env);
   auto evald = eval_ast(env, fn_return->body);
   return last(evald);
 }
