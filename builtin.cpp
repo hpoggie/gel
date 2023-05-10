@@ -549,6 +549,21 @@ lref repl_env = std::shared_ptr<Map>(new Map({
 
       return env_get(current_env, sym) != nullptr ? True : False;
     })},
+    {"env-get", new LispFunction([](lref args) {
+      check_num_args(args, 1);
+      auto sym = std::dynamic_pointer_cast<Symbol>(car(args));
+      if (sym == nullptr) {
+        throw lisp_error("First argument to env-get is not a symbol.");
+      }
+
+      // TODO: this is bad, figure out a better way to signal error
+      auto val = env_get(current_env, sym);
+      if (val == nullptr) {
+        throw lisp_error("Key to env-get not in symbol table: " + try_repr(sym));
+      }
+
+      return val;
+    })},
   }));
 
 lref current_env = cons(repl_env, Nil);

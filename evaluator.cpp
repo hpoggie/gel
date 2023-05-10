@@ -313,25 +313,6 @@ lref eval(lref env, lref input, bool debug_command) {
       return Nil;
     }
 
-    if (special_symbol->name == "env-get") {
-      check_num_args(args, 1);
-
-      auto evald = eval(env, car(args));
-
-      auto sym = std::dynamic_pointer_cast<Symbol>(evald);
-      if (sym == nullptr) {
-        throw lisp_error("First argument to env-get is not a symbol.");
-      }
-
-      // TODO: this is bad, figure out a better way to signal error
-      auto val = env_get(env, sym);
-      if (val == nullptr) {
-        throw lisp_error("Key to env-get not in symbol table: " + try_repr(sym));
-      }
-
-      return val;
-    }
-
     if (special_symbol->name == "let") {
       //auto new_env = std::make_shared<Map>();
       //env = cons(new_env, env);
