@@ -227,4 +227,6 @@
 ;; Don't multi-eval things in the case that the first arg is a function
 (assert (list? ((fn (x) x) '(+ 2 2))))
 
+(assert= (len (concat nil '(1 2 3))) 3)
+
 (prn "--- All tests finished. ---")

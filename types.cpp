@@ -238,6 +238,10 @@ lref copy_list(const lref& arg) {
 }
 
 lref concat(const lref& list1, const lref& list2) {
+  if (list1 == Nil) {
+    return copy_list(list2);
+  }
+
   auto res = copy_list(list1);
   rplacd(tail(res), copy_list(list2));
   return res;
