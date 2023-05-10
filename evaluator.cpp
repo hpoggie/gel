@@ -77,6 +77,8 @@ lref quasiquote(const lref& ast) {
     if (elt_as_cons != nullptr) {
       auto elt_car_as_sym = std::dynamic_pointer_cast<Symbol>(elt_as_cons->car).get();
       if (elt_car_as_sym != nullptr && elt_car_as_sym->name == "splice-unquote") {
+        // So _that_ was why I wrote "fuck" here
+        // fuck
         res = cons(std::make_shared<Symbol>("concat"),
                    cons(car(elt_as_cons->cdr),
                         cons(res, Nil)));
