@@ -304,132 +304,129 @@ lref eval(lref env, lref input, bool debug_command) {
     auto args = cdr(input);
 
     auto special_symbol = std::dynamic_pointer_cast<Symbol>(fname).get();
-    // If the first element is not a symbol, we can't eval this.
-    if (special_symbol == nullptr) {
-      throw eval_error("First argument of " + input->repr() + " is not a symbol. Can't eval.");
-    }
-
-    if (special_symbol->name == "break") {
-      Gel_in_debugger = true;
-      continue;
-    }
-
-    if (special_symbol->name == "resume") {
-      Gel_in_debugger = false;
-      return Nil;
-    }
-
-    if (special_symbol->name == "let") {
-      //auto new_env = std::make_shared<Map>();
-      //env = cons(new_env, env);
-      auto bindings = cadr(input);
-
-      auto binding_names = Nil;
-      auto binding_values = Nil;
-      for (auto p = bindings; p != Nil; p = cddr(p)) {
-        binding_names = cons(car(p), binding_names);
-        binding_values = cons(eval(env, cadr(p)), binding_values);
-      }
-
-      auto body = cddr(input);
-      //env_set(env, car(bindings), eval(env, cadr(bindings)));
-      env = bind_let_params(binding_names, binding_values, env);
-
-      // Implicit progn
-      if (body == Nil) {
-        input = Nil;
+    if (special_symbol != nullptr) {
+      if (special_symbol->name == "break") {
+        Gel_in_debugger = true;
         continue;
       }
 
-      eval_ast(env, butlast(body));
-      input = last(body);
-      continue;
-    }
-
-    if (special_symbol->name == "set") {
-      check_num_args(args, 2);
-      auto l_env = env_find(car(args), env);
-      if (l_env == nullptr) {
-        throw eval_error("Symbol " + try_repr(car(args)) + " not found.");
+      if (special_symbol->name == "resume") {
+        Gel_in_debugger = false;
+        return Nil;
       }
 
-      map_set(l_env, car(args), eval(env, cadr(args)));
-      input = cadr(args);
-      continue;
-    }
+      if (special_symbol->name == "let") {
+        //auto new_env = std::make_shared<Map>();
+        //env = cons(new_env, env);
+        auto bindings = cadr(input);
 
-    if (special_symbol->name == "if") {
-      check_num_args(args, 3);
-
-      auto condition = eval(env, car(args));
-      input = (condition == Nil || condition == False) ? cadr(cdr(args)) : cadr(args);
-      continue;
-    }
-
-    if (special_symbol->name == "fn") {
-      auto bindings = car(args);
-      auto body = cdr(args);
-      return std::make_shared<FnReturn>(body, bindings, env);
-    }
-
-    if (special_symbol->name == "quote") {
-      check_num_args(args, 1);
-      return car(args);
-    }
-
-    if (special_symbol->name == "quasiquote") {
-      check_num_args(args, 1);
-      input = quasiquote(car(args));
-      continue;
-    }
-
-    if (special_symbol->name == "macroexpand") {
-      check_num_args(args, 1);
-      return macroexpand(car(args), env);
-    }
-
-    // (try A B C)
-    if (special_symbol->name == "try") {
-      check_num_args(args, 3);
-      try {
-        return eval(env, car(args));
-      } catch (const lisp_error &e) {
-        auto catch_form = cdr(args);
-
-        // Make a new env that binds B to the exception
-        auto new_env = std::make_shared<Map>();
-        env = cons(new_env, env);
-        env_set(env, std::dynamic_pointer_cast<Symbol>(car(catch_form)), e.value);
-
-        input = cadr(catch_form);
-        continue;
-      }
-    }
-
-    // Same as normal evaluation but with a list
-    if (special_symbol->name == "apply") {
-      check_num_args(args, 2);
-      auto func = eval(env, car(args));
-      auto arglist = eval(env, cadr(args));
-      auto as_fn_return = std::dynamic_pointer_cast<FnReturn>(func).get();
-      if (as_fn_return != nullptr) {
-        // Set up a new env using the bindings
-        env = bind_without_evaluating(func, arglist, env);
-
-        // Eval the body of the function
-        if (cdr(as_fn_return->body) != Nil) {
-          eval_ast(env, butlast(as_fn_return->body));
+        auto binding_names = Nil;
+        auto binding_values = Nil;
+        for (auto p = bindings; p != Nil; p = cddr(p)) {
+          binding_names = cons(car(p), binding_names);
+          binding_values = cons(eval(env, cadr(p)), binding_values);
         }
-        input = last(as_fn_return->body);
+
+        auto body = cddr(input);
+        //env_set(env, car(bindings), eval(env, cadr(bindings)));
+        env = bind_let_params(binding_names, binding_values, env);
+
+        // Implicit progn
+        if (body == Nil) {
+          input = Nil;
+          continue;
+        }
+
+        eval_ast(env, butlast(body));
+        input = last(body);
         continue;
       }
 
-      auto as_lisp_function = std::dynamic_pointer_cast<LispFunction>(func).get();
-      if (as_lisp_function != nullptr) {
-        return as_lisp_function->value(arglist);
+      if (special_symbol->name == "set") {
+        check_num_args(args, 2);
+        auto l_env = env_find(car(args), env);
+        if (l_env == nullptr) {
+          throw eval_error("Symbol " + try_repr(car(args)) + " not found.");
+        }
+
+        map_set(l_env, car(args), eval(env, cadr(args)));
+        input = cadr(args);
+        continue;
       }
 
-      throw eval_error("Can't apply something that isn't a function.");
+      if (special_symbol->name == "if") {
+        check_num_args(args, 3);
+
+        auto condition = eval(env, car(args));
+        input = (condition == Nil || condition == False) ? cadr(cdr(args)) : cadr(args);
+        continue;
+      }
+
+      if (special_symbol->name == "fn") {
+        auto bindings = car(args);
+        auto body = cdr(args);
+        return std::make_shared<FnReturn>(body, bindings, env);
+      }
+
+      if (special_symbol->name == "quote") {
+        check_num_args(args, 1);
+        return car(args);
+      }
+
+      if (special_symbol->name == "quasiquote") {
+        check_num_args(args, 1);
+        input = quasiquote(car(args));
+        continue;
+      }
+
+      if (special_symbol->name == "macroexpand") {
+        check_num_args(args, 1);
+        return macroexpand(car(args), env);
+      }
+
+      // (try A B C)
+      if (special_symbol->name == "try") {
+        check_num_args(args, 3);
+        try {
+          return eval(env, car(args));
+        } catch (const lisp_error &e) {
+          auto catch_form = cdr(args);
+
+          // Make a new env that binds B to the exception
+          auto new_env = std::make_shared<Map>();
+          env = cons(new_env, env);
+          env_set(env, std::dynamic_pointer_cast<Symbol>(car(catch_form)), e.value);
+
+          input = cadr(catch_form);
+          continue;
+        }
+      }
+
+      // Same as normal evaluation but with a list
+      if (special_symbol->name == "apply") {
+        check_num_args(args, 2);
+        auto func = eval(env, car(args));
+        auto arglist = eval(env, cadr(args));
+        auto as_fn_return = std::dynamic_pointer_cast<FnReturn>(func).get();
+        if (as_fn_return != nullptr) {
+          // Set up a new env using the bindings
+          env = bind_without_evaluating(func, arglist, env);
+
+          // Eval the body of the function
+          if (cdr(as_fn_return->body) != Nil) {
+            eval_ast(env, butlast(as_fn_return->body));
+          }
+          input = last(as_fn_return->body);
+          continue;
+        }
+
+        auto as_lisp_function = std::dynamic_pointer_cast<LispFunction>(func).get();
+        if (as_lisp_function != nullptr) {
+          return as_lisp_function->value(arglist);
+        }
+
+        throw eval_error("Can't apply something that isn't a function.");
+      }
     }
 
     // If it wasn't a special form, eval it normally

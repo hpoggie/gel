@@ -222,4 +222,9 @@
 (assert (not (empty? (env-get (car '(+))))))
 (assert (defined? (car '(+))))
 
+;; Call functions not by name
+(assert= ((fn () 3)) 3)
+;; Don't multi-eval things in the case that the first arg is a function
+(assert (list? ((fn (x) x) '(+ 2 2))))
+
 (prn "--- All tests finished. ---")
