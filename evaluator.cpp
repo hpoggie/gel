@@ -380,27 +380,8 @@ lref eval(lref env, lref input, bool debug_command) {
       // Same as normal evaluation but with a list
       if (special_symbol->name == "apply") {
         check_num_args(args, 2);
-        auto func = eval(env, car(args));
-        auto arglist = eval(env, cadr(args));
-        auto as_fn_return = std::dynamic_pointer_cast<FnReturn>(func).get();
-        if (as_fn_return != nullptr) {
-          // Set up a new env using the bindings
-          env = bind_without_evaluating(func, arglist, env);
-
-          // Eval the body of the function
-          if (cdr(as_fn_return->body) != Nil) {
-            eval_ast(env, butlast(as_fn_return->body));
-          }
-          input = last(as_fn_return->body);
-          continue;
-        }
-
-        auto as_lisp_function = std::dynamic_pointer_cast<LispFunction>(func).get();
-        if (as_lisp_function != nullptr) {
-          return as_lisp_function->value(arglist);
-        }
-
-        throw eval_error("Can't apply something that isn't a function.");
+        input = cons(car(args), eval(env, cadr(args)));
+        // Intentional fallthrough
       }
     }
 
