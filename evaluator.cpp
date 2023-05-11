@@ -186,8 +186,8 @@ lref macroexpand(lref ast, const lref& env) {
   return ast;
 }
 
-lref eval(lref env, lref input, const lref& callstack) {
-  auto new_callstack = cons(input, callstack);
+lref eval(lref env, lref input, const lref& old_callstack) {
+  auto new_callstack = cons(input, old_callstack);
 
   while (true) {
     if (input.get() == nullptr) {
