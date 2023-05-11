@@ -32,10 +32,10 @@
 (defmacro assert= (lhs rhs)
   (let (val1 (gensym) val2 (gensym))
     `(let (,val1 ,lhs ,val2 ,rhs)
-            (if (= ,val1 ,val2) nil
-              (progn
-                (prn "Assertion Failed: " (quote ,lhs) " is not equal to " (quote ,rhs))
-                (prn "    Values: " ,val1 " is not equal to " ,val2))))))
+          (if (= ,val1 ,val2) nil
+            (progn
+              (prn "Assertion Failed: " (quote ,lhs) " is not equal to " (quote ,rhs))
+              (prn "    Values: " ,val1 " is not equal to " ,val2))))))
 
 (defun and (a b) (if a (if b true false) false))
 (defun or (a b) (if a true (if b true false)))
@@ -128,9 +128,9 @@
         ;; Make sure the function that looks up the method to call is defined
         (if (defined? ',method-name) nil
             (defun ,method-name (,instance &rest ,args)
-            (-> (map-get __METHOD_TABLE__ ',method-name)
-                (map-get (type ,instance))
-                (apply (cons ,instance ,args)))))
+             (-> (map-get __METHOD_TABLE__ ',method-name)
+                 (map-get (type ,instance))
+                 (apply (cons ,instance ,args)))))
         ;; TODO: can't just make a variable that points to the map, it gets copied
         ;; Find a better way to do this
         ;; Probably don't want to go all in on immutability since that's not super gamedev friendly
