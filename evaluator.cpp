@@ -197,8 +197,6 @@ lref eval(lref env, lref input, const lref& old_callstack) {
     }
 
     if (Gel_in_debugger) {
-      std::cout << input->repr() << std::endl;
-
       std::string inp;
       std::cout << "geldb λ ";
       getline(std::cin, inp);
@@ -242,6 +240,8 @@ lref eval(lref env, lref input, const lref& old_callstack) {
         continue;
       }
       // Otherwise, fallthrough
+      // Print what we're about to evaluate
+      std::cout << input->repr() << std::endl;
     }
 
     if (input == Nil) {
