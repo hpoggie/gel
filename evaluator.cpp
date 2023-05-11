@@ -209,7 +209,14 @@ lref eval(lref env, lref input, const lref& old_callstack) {
       }
 
       if (inp == "bt") {
-        std::cout << new_callstack->repr() << std::endl;
+        for (lref cursor = new_callstack; cursor != Nil; cursor = cdr(cursor)) {
+          auto rep = car(cursor)->repr();
+          if (rep.size() > 96) {
+            rep = rep.substr(0, 96) + "...";
+          }
+
+          std::cout << rep << std::endl;
+        }
         continue;
       }
 
