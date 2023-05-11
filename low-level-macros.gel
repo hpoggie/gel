@@ -1,13 +1,43 @@
 (-def-internal! 'def (fn (key value)
-  `(-def-internal! ',key ,value)))
+                      `(-def-internal! ',key ,value)))
 
 (-make-macro! def)
 (set-function-name! def "def")
 
 (def defmacro (fn (name arglist &rest body)
-  `(progn (def ,name (fn ,arglist ,@body))
-          (set-function-name! ,name (repr ',name))
-          (-make-macro! ,name))))
+               `(progn (def ,name (fn ,arglist ,@body))
+                       (set-function-name! ,name (repr ',name))
+                       (-make-macro! ,name))))
 
 (set-function-name! defmacro "defmacro")
 (-make-macro! defmacro)
+
+(def by2 (fn (lst)
+             (if (empty? lst)
+                 nil
+                 (cons
+                  (list (car lst) (cadr lst))
+                  (by2 (cddr lst))))))
+
+(def transpose2 (fn (lst)
+                    (list
+                     ;; Have to do this for now b/c we can't apply builtins
+                     (mapcar (fn (x) (car x)) lst)
+                     (mapcar (fn (x) (cadr x)) lst))))
+
+(def -sym= (fn (s1 s2) (str= (repr s1) (repr s2))))
+
+(def contains-sym? (fn (lst sym)
+                       (if (empty? lst) false
+                        (if (-sym= sym (car lst))
+                            true
+                          (contains-sym? (cdr lst) sym)))))
+
+(defmacro let (bindings &rest body)
+  (if (contains-sym? bindings '&rest)
+      (progn
+       (throw "&rest not supported in let.")
+       nil)
+   (progn
+     (set bindings (transpose2 (by2 bindings)))
+    `((fn (,@(car bindings)) (progn ,@body)) ,@(cadr bindings)))))

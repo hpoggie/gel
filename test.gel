@@ -212,7 +212,9 @@
 (assert= (let (x 3 y 4) (+ x y)) 7)
 (assert= (let (x 1 y 2 z 3) (+ x y z)) 6)
 ;; Trust me, we do need to check for this
-(assert= (let (x 1 y 2 &rest 3) x) 1)
+;; TODO: what should properly happen in this situation?
+;; Probably error with "&rest not allowed in let" or something
+(assert-except (let (x 1 y 2 &rest 3) x))
 (assert-except (let (x 1 y 2 &rest z 3 4 5) x))
 
 (assert (is-builtin? '+))

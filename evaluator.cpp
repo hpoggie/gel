@@ -317,33 +317,6 @@ lref eval(lref env, lref input, bool debug_command) {
         return Nil;
       }
 
-      if (special_symbol->name == "let") {
-        //auto new_env = std::make_shared<Map>();
-        //env = cons(new_env, env);
-        auto bindings = cadr(input);
-
-        auto binding_names = Nil;
-        auto binding_values = Nil;
-        for (auto p = bindings; p != Nil; p = cddr(p)) {
-          binding_names = cons(car(p), binding_names);
-          binding_values = cons(eval(env, cadr(p)), binding_values);
-        }
-
-        auto body = cddr(input);
-        //env_set(env, car(bindings), eval(env, cadr(bindings)));
-        env = bind_let_params(binding_names, binding_values, env);
-
-        // Implicit progn
-        if (body == Nil) {
-          input = Nil;
-          continue;
-        }
-
-        eval_ast(env, butlast(body));
-        input = last(body);
-        continue;
-      }
-
       if (special_symbol->name == "set") {
         check_num_args(args, 2);
         auto l_env = env_find(car(args), env);
