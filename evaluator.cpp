@@ -32,8 +32,8 @@ lref env_get(const lref& env, const lref& key) {
   return found_env != nullptr ? map_get(found_env, key) : nullptr;
 }
 
-lref eval(lref env, lref input);
-lref eval_ast(const lref& env, const lref& ast) {
+lref eval(lref env, lref input, const lref& callstack);
+lref eval_ast(const lref& env, const lref& ast, const lref& callstack) {
   if (ast == Nil) {
     return ast;
   }
@@ -49,7 +49,7 @@ lref eval_ast(const lref& env, const lref& ast) {
 
   auto _cons = std::dynamic_pointer_cast<Cons>(ast).get();
   if (_cons) {
-    return mapcar([env](lref args){ return eval(env, car(args)); }, ast);
+    return mapcar([env, callstack](lref args){ return eval(env, car(args), callstack); }, ast);
   }
 
   return ast;
@@ -150,7 +150,7 @@ lref apply(const lref& func, const lref& args, lref env) {
   }
 
   env = bind_without_evaluating(func, args, env);
-  auto evald = eval_ast(env, fn_return->body);
+  auto evald = eval_ast(env, fn_return->body, Nil);
   return last(evald);
 }
 
@@ -186,7 +186,9 @@ lref macroexpand(lref ast, const lref& env) {
   return ast;
 }
 
-lref eval(lref env, lref input) {
+lref eval(lref env, lref input, const lref& callstack) {
+  auto new_callstack = cons(input, callstack);
+
   while (true) {
     if (input.get() == nullptr) {
       // If there's nothing left to evaluate, quit
@@ -204,6 +206,11 @@ lref eval(lref env, lref input) {
         std::cout << "Resuming..." << std::endl;
         Gel_in_debugger = false;
         return Nil;
+      }
+
+      if (inp == "bt") {
+        std::cout << new_callstack->repr() << std::endl;
+        continue;
       }
 
       if (inp != "s") {
@@ -236,14 +243,14 @@ lref eval(lref env, lref input) {
 
     // If we didn't get a cons, just eval it
     if (std::dynamic_pointer_cast<Cons>(input).get() == nullptr) {
-      return eval_ast(env, input);
+      return eval_ast(env, input, new_callstack);
     }
 
     input = macroexpand(input, env);
 
     // Check if macroexpand returned a cons
     if (std::dynamic_pointer_cast<Cons>(input).get() == nullptr) {
-      return eval_ast(env, input);
+      return eval_ast(env, input, new_callstack);
     }
 
     auto fname = car(input);
@@ -268,7 +275,7 @@ lref eval(lref env, lref input) {
           throw eval_error("Symbol " + try_repr(car(args)) + " not found.");
         }
 
-        map_set(l_env, car(args), eval(env, cadr(args)));
+        map_set(l_env, car(args), eval(env, cadr(args), new_callstack));
         input = cadr(args);
         continue;
       }
@@ -276,7 +283,7 @@ lref eval(lref env, lref input) {
       if (special_symbol->name == "if") {
         check_num_args(args, 3);
 
-        auto condition = eval(env, car(args));
+        auto condition = eval(env, car(args), new_callstack);
         input = (condition == Nil || condition == False) ? cadr(cdr(args)) : cadr(args);
         continue;
       }
@@ -307,7 +314,7 @@ lref eval(lref env, lref input) {
       if (special_symbol->name == "try") {
         check_num_args(args, 3);
         try {
-          return eval(env, car(args));
+          return eval(env, car(args), new_callstack);
         } catch (const lisp_error &e) {
           auto catch_form = cdr(args);
 
@@ -324,13 +331,13 @@ lref eval(lref env, lref input) {
       // Same as normal evaluation but with a list
       if (special_symbol->name == "apply") {
         check_num_args(args, 2);
-        input = cons(car(args), eval(env, cadr(args)));
+        input = cons(car(args), eval(env, cadr(args), new_callstack));
         // Intentional fallthrough
       }
     }
 
     // If it wasn't a special form, eval it normally
-    auto evald = eval_ast(env, input);
+    auto evald = eval_ast(env, input, new_callstack);
 
     // If the evaluation didn't result in a cons, just return the result
     auto _cons = std::dynamic_pointer_cast<Cons>(evald).get();
@@ -349,7 +356,7 @@ lref eval(lref env, lref input) {
 
       // Eval the body of the function
       if (cdr(fn_return->body) != Nil) {
-        eval_ast(env, butlast(fn_return->body));
+        eval_ast(env, butlast(fn_return->body), new_callstack);
       }
       input = last(fn_return->body);
       continue;
@@ -363,4 +370,8 @@ lref eval(lref env, lref input) {
     // TODO: handle improper list
     return function->value(cdr(evald));
   }
+}
+
+lref eval(lref env, lref input) {
+  return eval(env, input, Nil);
 }
