@@ -2,7 +2,7 @@
 #include "builtin.h"
 #include "reader.h"
 
-bool Gel_in_debugger = false;
+static bool Gel_in_debugger = false;
 
 void env_set(const lref& env, const lref& key, const lref& value) {
   map_set(car(env), key, value);
@@ -251,39 +251,48 @@ lref macroexpand(lref ast, const lref& env) {
   return ast;
 }
 
-lref eval(lref env, lref input, bool debug_command) {
+lref eval(lref env, lref input) {
   while (true) {
-    if (Gel_in_debugger && !debug_command) {
-      std::string inp;
-      std::cout << "geldb λ ";
-      getline(std::cin, inp);
-      try {
-        std::cout << eval(env, read(inp.c_str()), true)->repr() << std::endl;
-        if (!Gel_in_debugger) {
-          std::cout << "Resuming..." << std::endl;
-          return Nil;
-        }
-      } catch (const lisp_error& e) {
-        auto val = e.value.get();
-        if (val == nullptr) {
-            std::cout << "Unknown error. Value of lisp_error was Nil."
-                        << " This should never happen."
-                        << std::endl;
-            return Nil;
-        }
-
-        std::cout << "Unhandled error: "
-                    << val->repr()
-                    << std::endl
-                    << e.stack_trace.get()->str();
-      }
-      continue;
-    }
-
     if (input.get() == nullptr) {
       // If there's nothing left to evaluate, quit
       std::cout << "bye" << std::endl;
       exit(0);
+    }
+
+    if (Gel_in_debugger) {
+      std::cout << input->repr() << std::endl;
+
+      std::string inp;
+      std::cout << "geldb λ ";
+      getline(std::cin, inp);
+      if (inp == "c") {
+        std::cout << "Resuming..." << std::endl;
+        Gel_in_debugger = false;
+        return Nil;
+      }
+
+      if (inp != "s") {
+        try {
+          Gel_in_debugger = false;
+          std::cout << eval(env, read(inp.c_str()))->repr() << std::endl;
+          Gel_in_debugger = true;
+        } catch (const lisp_error& e) {
+          auto val = e.value.get();
+          if (val == nullptr) {
+              std::cout << "Unknown error. Value of lisp_error was Nil."
+                          << " This should never happen."
+                          << std::endl;
+              return Nil;
+          }
+
+          std::cout << "Unhandled error: "
+                      << val->repr()
+                      << std::endl
+                      << e.stack_trace.get()->str();
+        }
+        continue;
+      }
+      // Otherwise, fallthrough
     }
 
     if (input == Nil) {
@@ -309,12 +318,12 @@ lref eval(lref env, lref input, bool debug_command) {
     if (special_symbol != nullptr) {
       if (special_symbol->name == "break") {
         Gel_in_debugger = true;
+        input = Nil;
         continue;
       }
 
-      if (special_symbol->name == "resume") {
-        Gel_in_debugger = false;
-        return Nil;
+      if (special_symbol->name == "env") {
+        return env;
       }
 
       if (special_symbol->name == "set") {
@@ -419,8 +428,4 @@ lref eval(lref env, lref input, bool debug_command) {
     // TODO: handle improper list
     return function->value(cdr(evald));
   }
-}
-
-lref eval(lref env, lref input) {
-  return eval(env, input, false);
 }
