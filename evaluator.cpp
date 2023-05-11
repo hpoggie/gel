@@ -3,6 +3,7 @@
 #include "reader.h"
 
 static bool Gel_in_debugger = false;
+static std::string Gel_debugger_last_command = "";
 
 void env_set(const lref& env, const lref& key, const lref& value) {
   map_set(car(env), key, value);
@@ -200,6 +201,12 @@ lref eval(lref env, lref input, const lref& old_callstack) {
       std::string inp;
       std::cout << "geldb λ ";
       getline(std::cin, inp);
+      if (inp == "") {
+        inp = Gel_debugger_last_command;
+      }
+
+      Gel_debugger_last_command = inp;
+
       if (inp == "c") {
         std::cout << "Resuming..." << std::endl;
         Gel_in_debugger = false;
