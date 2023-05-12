@@ -6,7 +6,7 @@
 class eval_error : public lisp_error { using lisp_error::lisp_error; };
 
 lref eval(lref env, lref input);
-lref apply(const lref& func, const lref& args, lref env);
+lref apply(const lref& func, const lref& args, lref env, const lref& callstack);
 
 void global_env_set(const lref& key, const lref& value);
 lref env_get(const lref& env, const lref& key);

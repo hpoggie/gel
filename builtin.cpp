@@ -216,7 +216,8 @@ LispFunction* _mapcar = new LispFunction([](lref args) -> lref {
                  // We don't care about the env if it's a builtin.
                  // In that case, use current_env
                  // Otherwise, use the function's env
-                 as_fn_return != nullptr ? as_fn_return->env : current_env);},
+                 as_fn_return != nullptr ? as_fn_return->env : current_env,
+                 Nil);},
     cadr(args));
 });
 

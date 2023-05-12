@@ -143,7 +143,7 @@ lref bind_without_evaluating(lref func, lref args, lref env) {
   return env;
 }
 
-lref apply(const lref& func, const lref& args, lref env) {
+lref apply(const lref& func, const lref& args, lref env, const lref& callstack) {
   auto fn_return = std::dynamic_pointer_cast<FnReturn>(func).get();
   if (fn_return == nullptr) {
     throw eval_error("Bad argument to apply: " + try_repr(func)
@@ -151,7 +151,7 @@ lref apply(const lref& func, const lref& args, lref env) {
   }
 
   env = bind_without_evaluating(func, args, env);
-  auto evald = eval_ast(env, fn_return->body, Nil);
+  auto evald = eval_ast(env, fn_return->body, callstack);
   return last(evald);
 }
 
@@ -179,9 +179,9 @@ bool is_macro_call(const lref& ast, const lref& env) {
   return val_as_fn->is_macro;
 }
 
-lref macroexpand(lref ast, const lref& env) {
+lref macroexpand(lref ast, const lref& env, const lref& callstack) {
   while (is_macro_call(ast, env)) {
-    ast = apply(env_get(env, car(ast)), cdr(ast), env);
+    ast = apply(env_get(env, car(ast)), cdr(ast), env, callstack);
   }
 
   return ast;
@@ -266,7 +266,7 @@ lref eval(lref env, lref input, const lref& old_callstack) {
       return eval_ast(env, input, new_callstack);
     }
 
-    input = macroexpand(input, env);
+    input = macroexpand(input, env, new_callstack);
 
     // Check if macroexpand returned a cons
     if (std::dynamic_pointer_cast<Cons>(input).get() == nullptr) {
@@ -327,7 +327,7 @@ lref eval(lref env, lref input, const lref& old_callstack) {
 
       if (special_symbol->name == "macroexpand") {
         check_num_args(args, 1);
-        return macroexpand(car(args), env);
+        return macroexpand(car(args), env, new_callstack);
       }
 
       // (try A B C)
