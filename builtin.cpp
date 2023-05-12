@@ -51,15 +51,6 @@ LispFunction* wrap_func (std::function<return_type(template_args...)> wrapped_fu
   });
 }
 
-// The following section is here just to test if wrap_func compiles
-// It can probably be deleted
-
-int foo(int bar, int baz) {
-  return bar + baz;
-}
-
-LispFunction* wrap_foo = wrap_func(std::function(foo));
-
 LispFunction* plus = new LispFunction([](lref args) -> lref {
   LispInt sum = 0;
 
