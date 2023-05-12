@@ -1,5 +1,5 @@
 (defun repl ()
-  (put "gel> ")
+  (put "λ ")
   (let (s (input))
     (if (empty? s)
         (prn "bye")
