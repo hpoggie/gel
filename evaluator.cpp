@@ -209,13 +209,13 @@ lref eval(lref env, lref input, const lref& old_callstack) {
     }
 
     if (Gel_in_debugger) {
-      std::string inp;
-      std::cout << "geldb λ ";
-
       if (std::cin.eof()) {
         std::cout << "bye" << std::endl;
         exit(0);
       }
+
+      std::string inp;
+      std::cout << "geldb λ ";
 
       getline(std::cin, inp);
       if (inp == "") {
@@ -238,7 +238,7 @@ lref eval(lref env, lref input, const lref& old_callstack) {
       if (inp != "s") {
         try {
           Gel_in_debugger = false;
-          std::cout << eval(env, read(inp.c_str()))->repr() << std::endl;
+          std::cout << eval(env, read(inp.c_str()), new_callstack)->repr() << std::endl;
           Gel_in_debugger = true;
         } catch (const lisp_error& e) {
           auto val = e.value.get();
@@ -402,6 +402,6 @@ lref eval(lref env, lref input, const lref& old_callstack) {
   }
 }
 
-lref eval(lref env, lref input) {
+lref eval_toplevel(lref env, lref input) {
   return eval(env, input, Nil);
 }

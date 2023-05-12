@@ -3,7 +3,7 @@
 #include "builtin.h"
 
 void re(const char* const input) {
-  eval(current_env, read(input));
+  eval_toplevel(current_env, read(input));
 }
 
 int main() {
