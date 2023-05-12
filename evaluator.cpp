@@ -200,6 +200,12 @@ lref eval(lref env, lref input, const lref& old_callstack) {
     if (Gel_in_debugger) {
       std::string inp;
       std::cout << "geldb λ ";
+
+      if (std::cin.eof()) {
+        std::cout << "bye" << std::endl;
+        exit(0);
+      }
+
       getline(std::cin, inp);
       if (inp == "") {
         inp = Gel_debugger_last_command;
