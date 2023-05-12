@@ -284,7 +284,7 @@ lref eval(lref env, lref input, const lref& old_callstack) {
     if (special_symbol != nullptr) {
       if (special_symbol->name == "break") {
         Gel_in_debugger = true;
-        print_callstack(new_callstack);
+        std::cout << car(old_callstack)->repr() << std::endl;
         input = Nil;
         continue;
       }
