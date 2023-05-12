@@ -3,7 +3,6 @@
 
 #include "builtin.h"
 #include "evaluator.h"
-#include "repl.h"
 #include "reader.h"
 #include "vm.h"
 
