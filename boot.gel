@@ -6,3 +6,5 @@
 (load-file "test-compiler.gel")
 
 (prn "boot.gel loaded.")
+
+(load-file "repl.gel")

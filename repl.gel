@@ -1,0 +1,10 @@
+(defun repl ()
+  (put "gel> ")
+  (let (s (input))
+    (if (empty? s)
+        (prn "bye")
+      (progn
+        (prn (eval (read-string s)))
+        (repl)))))
+
+(repl)

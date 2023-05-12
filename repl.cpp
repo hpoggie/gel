@@ -36,16 +36,18 @@ int main() {
   re("(-def-internal! 'load-file (fn (path) (eval (read-string \"(progn \n\" (slurp path) \"\nnil)\"))))");
   re("(load-file \"boot.gel\")");
 
+  /*
   std::string inp;
   while (!std::cin.eof()) {
     std::cout << "gel> ";
     getline(std::cin, inp);
-    //try {
+    try {
       rep(inp.c_str());
-    //} catch (const lisp_error& e) {
-      //std::cout << "Unhandled error: " << e.value.get()->repr() << std::endl;
-    //}
+    } catch (const lisp_error& e) {
+      std::cout << "Unhandled error: " << e.value.get()->repr() << std::endl;
+    }
   }
+  */
 
   return 0;
 }

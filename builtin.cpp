@@ -401,6 +401,17 @@ lref repl_env = std::shared_ptr<Map>(new Map({
       return std::make_shared<LispInt>(*lhs % *rhs);
     })},
     {"prn", prn},
+    {"put", new LispFunction([](lref args) -> lref {
+      std::string to_print = "";
+      while(args != Nil) {
+        to_print += try_str(car(args));
+        args = cdr(args);
+      }
+
+      std::cout << to_print;
+
+      return Nil;
+    })},
     {"repr", _repr},
     {"list", list},
     {"cons", _cons},
@@ -564,6 +575,16 @@ lref repl_env = std::shared_ptr<Map>(new Map({
       }
 
       return val;
+    })},
+    {"input", new LispFunction([](lref args) -> lref {
+      check_num_args(args, 0);
+      if (std::cin.eof()) {
+        return Nil;
+      }
+
+      std::string inp;
+      getline(std::cin, inp);
+      return std::make_shared<String>(inp);
     })},
   }));
 
