@@ -4,7 +4,9 @@
     (if (empty? s)
         (prn "bye")
       (progn
-        (prn (eval (read-string s)))
+        (try
+         (prn (eval (read-string s)))
+         ex (prn ex))
         (repl)))))
 
 (repl)
