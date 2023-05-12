@@ -386,6 +386,11 @@ lref eval(lref env, lref input, const lref& old_callstack) {
       input = last(fn_return->body);
       continue;
     }
+
+    auto second_order_function = std::dynamic_pointer_cast<SecondOrderLispFunction>(_cons->car).get();
+    if (second_order_function != nullptr) {
+      return second_order_function->value(cdr(evald), new_callstack);
+    }
     
     auto function = std::dynamic_pointer_cast<LispFunction>(_cons->car).get();
     if (function == nullptr) {

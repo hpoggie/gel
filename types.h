@@ -12,6 +12,8 @@ struct LispObject;
 
 using lref = std::shared_ptr<LispObject>;
 using _lisp_function = std::function<lref(lref)>;
+// Second argument is the callstack, for the debugger
+using _second_order_lisp_function = std::function<lref(lref, const lref&)>;
 
 struct lisp_error {
   lref value;
@@ -200,6 +202,15 @@ struct LispFunction : ILispFunction {
   std::string repr() const { return "<function>"; }
   std::string type_string() const { return "builtin-function"; }
   lref operator()(lref args) { return this->value(args); }
+};
+
+struct SecondOrderLispFunction : LispObject {
+  _second_order_lisp_function value;
+
+  SecondOrderLispFunction(_second_order_lisp_function value) { this->value = value; }
+  std::string repr() const { return "<function>"; }
+  std::string type_string() const { return "builtin-function"; }
+  lref operator()(lref args, const lref& callstack) { return this->value(args, callstack); }
 };
 
 struct MaybeError : LispObject {

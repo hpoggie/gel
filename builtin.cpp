@@ -198,7 +198,7 @@ LispFunction* gt = new LispFunction([](lref args) -> lref {
   Returns the result of applying function fn to each element of list lst.
   Doesn't mutate lst.
 */
-LispFunction* _mapcar = new LispFunction([](lref args) -> lref {
+SecondOrderLispFunction* _mapcar = new SecondOrderLispFunction([](lref args, const lref& callstack) -> lref {
   check_num_args(args, 2);
   auto func_ref = car(args);
   auto func = std::dynamic_pointer_cast<ILispFunction>(func_ref).get();
@@ -211,13 +211,13 @@ LispFunction* _mapcar = new LispFunction([](lref args) -> lref {
   // Try to cast the function to an FnReturn (user function).
   auto as_fn_return = std::dynamic_pointer_cast<FnReturn>(func_ref).get();
     
-  return mapcar([as_fn_return, func_ref](lref arg){
+  return mapcar([as_fn_return, func_ref, callstack](lref arg){
     return apply(func_ref, arg,
                  // We don't care about the env if it's a builtin.
                  // In that case, use current_env
                  // Otherwise, use the function's env
                  as_fn_return != nullptr ? as_fn_return->env : current_env,
-                 Nil);},
+                 callstack);},
     cadr(args));
 });
 
@@ -276,9 +276,9 @@ LispFunction* slurp = new LispFunction([](lref args) -> lref {
   This is intentional, and consistent with the way this works in other lisps
   (tested on Common Lisp and Emacs Lisp).
 */
-LispFunction* _eval = new LispFunction([](lref args) -> lref {
+SecondOrderLispFunction* _eval = new SecondOrderLispFunction([](lref args, const lref& callstack) -> lref {
   check_num_args(args, 1);
-  auto ret = eval(current_env, car(args));
+  auto ret = eval(current_env, car(args), callstack);
   // TODO: this is a bad way to handle this
   if (ret == nullptr) {
     throw eval_error("Failed to eval. First arg is not a symbol: "
