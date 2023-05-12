@@ -187,6 +187,17 @@ lref macroexpand(lref ast, const lref& env, const lref& callstack) {
   return ast;
 }
 
+void print_callstack(const lref& callstack) {
+  for (lref cursor = callstack; cursor != Nil; cursor = cdr(cursor)) {
+    auto rep = car(cursor)->repr();
+    if (rep.size() > 96) {
+      rep = rep.substr(0, 96) + "...";
+    }
+
+    std::cout << rep << std::endl;
+  }
+}
+
 lref eval(lref env, lref input, const lref& old_callstack) {
   auto new_callstack = cons(input, old_callstack);
 
@@ -220,14 +231,7 @@ lref eval(lref env, lref input, const lref& old_callstack) {
       }
 
       if (inp == "bt") {
-        for (lref cursor = new_callstack; cursor != Nil; cursor = cdr(cursor)) {
-          auto rep = car(cursor)->repr();
-          if (rep.size() > 96) {
-            rep = rep.substr(0, 96) + "...";
-          }
-
-          std::cout << rep << std::endl;
-        }
+        print_callstack(new_callstack);
         continue;
       }
 
@@ -280,6 +284,7 @@ lref eval(lref env, lref input, const lref& old_callstack) {
     if (special_symbol != nullptr) {
       if (special_symbol->name == "break") {
         Gel_in_debugger = true;
+        print_callstack(new_callstack);
         input = Nil;
         continue;
       }
