@@ -13,6 +13,10 @@ static const lref CloseBrace = std::make_shared<LispObject>();
 // regex escapes that to "\""
 static const auto backslash_quote_regex = std::regex("\\\\\"");
 
+// TODO: can't rely on this. Need to hash on the pointer because a pointer can have
+// whatever size
+std::unordered_map<unsigned long, Linum> line_table;
+
 const char* Reader::next() {
   // Returns and consumes the next token
 
