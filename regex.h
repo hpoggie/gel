@@ -5,7 +5,7 @@
 #include <regex>
 
 const auto token_regex = std::regex(
-  "\\s*(,@|[\\[\\]\\{\\}\\(\\)'`,]|\"(?:\\\\.|[^\\\\\"])*\"?|;.*|[^(\\s\\[\\]\\{\\}'\"`,;)]+)");
+  "[^\\S\\n]*(,@|[\\[\\]\\{\\}\\(\\)'`,]|\"(?:\\\\.|[^\\\\\"])*\"?|;.*|[^(\\s\\[\\]\\{\\}'\"`,;)]+|\\n)");
 
 std::vector<std::string> match_str(std::string input) {
 /*
@@ -40,6 +40,7 @@ std::vector<std::string> match_str(std::string input) {
   return ret;
 }
 
+/*
 std::vector<std::string> match_lines(std::string input) {
   // Separate input into lines
   std::smatch match;
@@ -52,5 +53,5 @@ std::vector<std::string> match_lines(std::string input) {
 
   return ret;
 }
-
+*/
 #endif

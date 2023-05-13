@@ -194,7 +194,9 @@ void print_callstack(const lref& callstack) {
       rep = rep.substr(0, 96) + "...";
     }
 
-    std::cout << line_table[(unsigned long)car(cursor).get()].filename
+    const auto& linum = line_table[(unsigned long)car(cursor).get()];
+    std::cout << linum.filename
+              << ":" << linum.line
               << " " << rep << std::endl;
   }
 }
@@ -285,7 +287,9 @@ lref eval(lref env, lref input, const lref& old_callstack) {
     if (special_symbol != nullptr) {
       if (special_symbol->name == "break") {
         Gel_in_debugger = true;
-        std::cout << line_table[(unsigned long)car(old_callstack).get()].filename
+        const auto& linum = line_table[(unsigned long)car(old_callstack).get()];
+        std::cout << linum.filename
+                  << ":" << linum.line
                   << " " << car(old_callstack)->repr() << std::endl;
         input = Nil;
         continue;

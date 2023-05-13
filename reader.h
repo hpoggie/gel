@@ -26,6 +26,7 @@ class Reader {
     const char* peek();
 
     std::string filename;
+    int current_line = 1;
   private:
     std::vector<std::string> input;
     size_t idx = 0;

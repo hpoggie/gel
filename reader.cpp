@@ -127,6 +127,7 @@ lref read_list(Reader* const reader, const lref& end_marker) {
   if (reader->filename != "") {
     Linum& linum = line_table[(unsigned long)ret.get()];
     linum.filename = reader->filename;
+    linum.line = reader->current_line;
   }
   return ret;
 }
@@ -232,6 +233,10 @@ lref read_form(Reader* const reader) {
                                            "splice-unquote" : "unquote"),
                   cons(form, Nil));
     }
+    case '\n':
+      reader->current_line++;
+      reader->next();
+      return read_form(reader);
     default:
       return read_atom(reader);
   }
@@ -265,6 +270,7 @@ lref read_internal(Reader& reader, const char* const input) {
 
 lref read(const char* const input) {
   auto reader = Reader(match_str(input));
+  reader.filename = "[no file]";
   return read_internal(reader, input);
 }
 
