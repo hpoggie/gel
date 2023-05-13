@@ -6,7 +6,7 @@ OBJECTS=$(patsubst %.cpp, build/%.o, $(SOURCES))
 # Gcc/Clang will create these .d files containing dependencies.
 DEP=$(OBJECTS:%.o=%.d)
 
-all: repl
+all: build_dir repl
 
 repl: $(OBJECTS)
 	g++ $(OBJECTS) -o gel -ldl
@@ -14,7 +14,7 @@ repl: $(OBJECTS)
 -include $(DEP)
 
 # $@ is the name of the target being generated, and $< the first prerequisite
-build/%.o : %.cpp build_dir
+build/%.o : %.cpp
 	g++ $(CFLAGS) -MMD $< -o $@
 
 build_dir:
