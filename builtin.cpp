@@ -605,6 +605,10 @@ lref repl_env = std::shared_ptr<Map>(new Map({
       getline(std::cin, inp);
       return std::make_shared<String>(inp);
     })},
+    {"macroexpand-recursive", new LispFunction([](lref args) -> lref {
+      check_num_args(args, 1);
+      return macroexpand_recursive(current_env, car(args));
+    })},
   }));
 
 lref current_env = cons(repl_env, Nil);

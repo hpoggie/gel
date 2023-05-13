@@ -5,6 +5,7 @@
 
 class eval_error : public lisp_error { using lisp_error::lisp_error; };
 
+lref macroexpand_recursive(lref env, lref input);
 lref eval_toplevel(lref env, lref input);
 lref eval(lref env, lref input, const lref& callstack);
 lref apply(const lref& func, const lref& args, lref env, const lref& callstack);

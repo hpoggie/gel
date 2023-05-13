@@ -1,8 +1,9 @@
 (-def-internal! 'import
                 (fn (filename)
                     (eval
-                     (read-string-with-filename
-                      filename "(progn " (slurp filename) " nil)"))))
+                     (macroexpand-recursive
+                      (read-string-with-filename
+                       filename "(progn " (slurp filename) " nil)")))))
 
 (import "low-level-macros.gel")
 (import "stdlib.gel")

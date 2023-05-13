@@ -408,6 +408,24 @@ lref eval(lref env, lref input, const lref& old_callstack) {
   }
 }
 
+bool is_cons(const lref& obj) {
+  return std::dynamic_pointer_cast<Cons>(obj) != nullptr;
+}
+
+lref macroexpand_recursive(lref env, lref input) {
+  if (!is_cons(input)) return input;
+
+  input = macroexpand(input, env, Nil);
+  for (auto c = input; c != Nil; c = cdr(c)) {
+    auto _c = std::dynamic_pointer_cast<Cons>(c);
+    if (_c == nullptr) throw eval_error("Can't macroexpand something that's not a cons.");
+    _c->car = macroexpand_recursive(env, _c->car);
+  }
+
+  return input;
+}
+
 lref eval_toplevel(lref env, lref input) {
+  macroexpand_recursive(env, input);
   return eval(env, input, Nil);
 }
