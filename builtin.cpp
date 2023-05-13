@@ -575,7 +575,7 @@ lref repl_env = std::shared_ptr<Map>(new Map({
       check_num_args(args, 1);
       auto sym = std::dynamic_pointer_cast<Symbol>(car(args));
       if (sym == nullptr) {
-        throw lisp_error("Argument is not a symbol.");
+        throw lisp_error("Argument is not a symbol: " + try_repr(car(args)));
       }
 
       return env_get(current_env, sym) != nullptr ? True : False;
