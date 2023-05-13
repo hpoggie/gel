@@ -41,3 +41,19 @@
    (progn
      (set bindings (transpose2 (by2 bindings)))
     `((fn (,@(car bindings)) (progn ,@body)) ,@(cadr bindings)))))
+
+(def function? (fn (obj) (-sym= (type obj) 'builtin-function)))
+
+(def symbol? (fn (obj) (-sym= (type obj) 'symbol)))
+
+(def replace-function-names (fn (form)
+    (if (cons? form)
+        (mapcar replace-function-names form)
+        (if (empty? form) form
+          (if (symbol? form)
+            (if (defined? form)
+                (let (val (env-get form))
+                  (if (function? val) val
+                    form))
+                form)
+            form)))))

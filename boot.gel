@@ -12,6 +12,11 @@
 (import "test-assembler.gel")
 (import "test-compiler.gel")
 
+;;(eval (replace-function-names (macroexpand-recursive (quote
+;;(dotimes 300
+  ;;(transpose2 '((1 2) (3 4) (5 6))))
+;;))))
+
 (prn "boot.gel loaded.")
 
 (import "repl.gel")
