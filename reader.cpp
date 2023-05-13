@@ -120,6 +120,10 @@ lref read_list(Reader* const reader, const lref& end_marker) {
     }
   }
 
+  if (reader->filename != "") {
+    Linum& linum = line_table[(unsigned long)ret.get()];
+    linum.filename = reader->filename;
+  }
   return ret;
 }
 
@@ -229,9 +233,7 @@ lref read_form(Reader* const reader) {
   }
 }
 
-lref read(const char* const input) {
-  auto reader = Reader(match_str(input));
-
+lref read_internal(Reader& reader, const char* const input) {
   auto res = read_form(&reader);
 
   if (res == CloseParen) {
@@ -255,4 +257,15 @@ lref read(const char* const input) {
   }
 
   return res;
+}
+
+lref read(const char* const input) {
+  auto reader = Reader(match_str(input));
+  return read_internal(reader, input);
+}
+
+lref read(const char* const input, const std::string& filename) {
+  auto reader = Reader(match_str(input));
+  reader.filename = filename;
+  return read_internal(reader, input);
 }

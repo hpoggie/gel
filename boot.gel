@@ -1,10 +1,16 @@
-(load-file "low-level-macros.gel")
-(load-file "stdlib.gel")
-(load-file "console.gel")
-(load-file "compiler.gel")
-(load-file "test-assembler.gel")
-(load-file "test-compiler.gel")
+(-def-internal! 'import
+                (fn (filename)
+                    (eval
+                     (read-string-with-filename
+                      filename "(progn " (slurp filename) " nil)"))))
+
+(import "low-level-macros.gel")
+(import "stdlib.gel")
+(import "console.gel")
+(import "compiler.gel")
+(import "test-assembler.gel")
+(import "test-compiler.gel")
 
 (prn "boot.gel loaded.")
 
-(load-file "repl.gel")
+(import "repl.gel")

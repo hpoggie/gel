@@ -228,6 +228,31 @@ LispFunction* read_string = new LispFunction([](lref args) -> lref {
   return ast.get() != nullptr ? ast : Nil;
 });
 
+LispFunction* read_string_with_filename = new LispFunction([](lref args) -> lref {
+  if (args == Nil || cdr(args) == Nil) {
+    throw eval_error("Too few arguments to read-string: " + try_repr(args) + "\nread-string requires a file path.");
+  }
+
+  auto path = std::dynamic_pointer_cast<String>(car(args)).get();
+  if (path == nullptr) {
+    throw eval_error("Bad argument type: " + try_repr(car(args)));
+  }
+
+  args = cdr(args);
+
+  std::string ret = "";
+  while (args != Nil) {
+    auto str = std::dynamic_pointer_cast<String>(car(args)).get();
+    if (str == nullptr) {
+      throw eval_error("Bad argument type: " + try_repr(car(args)));
+    }
+    ret += str->value;
+    args = cdr(args);
+  }
+  auto ast = read(ret.c_str(), path->value);
+  return ast.get() != nullptr ? ast : Nil;
+});
+
 /*
   Read a file into a string.
 */
@@ -413,6 +438,7 @@ lref repl_env = std::shared_ptr<Map>(new Map({
     {">", gt},
     {"mapcar", _mapcar},
     {"read-string", read_string},
+    {"read-string-with-filename", read_string_with_filename},
     {"slurp", slurp},
     {"eval", _eval},
     {"concat", _concat},
