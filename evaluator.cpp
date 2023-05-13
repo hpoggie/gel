@@ -50,7 +50,10 @@ lref eval_ast(const lref& env, const lref& ast, const lref& callstack) {
 
   auto _cons = std::dynamic_pointer_cast<Cons>(ast).get();
   if (_cons) {
-    return mapcar([env, callstack](lref args){ return eval(env, car(args), callstack); }, ast);
+    // Tried making this iterative - no noticeable difference in performance
+    // mapcar is about as fast as a for loop over a list
+    return mapcar([env, callstack](const lref& args){
+      return eval(env, car(args), callstack); }, ast);
   }
 
   return ast;
