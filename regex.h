@@ -40,18 +40,4 @@ std::vector<std::string> match_str(std::string input) {
   return ret;
 }
 
-/*
-std::vector<std::string> match_lines(std::string input) {
-  // Separate input into lines
-  std::smatch match;
-  std::vector<std::string> ret;
-
-  while (std::regex_search(input, match, std::regex("[^\\n]+"))) {
-    ret.push_back(match[0].str());
-    input = match.suffix().str();
-  }
-
-  return ret;
-}
-*/
 #endif
