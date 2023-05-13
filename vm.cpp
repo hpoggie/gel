@@ -42,7 +42,7 @@ std::vector<Instruction> assemble(lref lst) {
 
 std::string print_bytecode(const std::vector<Instruction>& bytecode) {
     std::string ret;
-    for (int i = 0; i < bytecode.size(); i++) {
+    for (std::vector<Instruction>::size_type i = 0; i < bytecode.size(); i++) {
         ret += bytecode[i].repr() + "\n";
     }
     return ret;

@@ -6,6 +6,8 @@
 #include "reader.h"
 #include "vm.h"
 
+#define UNREFERENCED(var) (void)(var);
+
 void check_num_args(const lref& arglist, int size) {
   if (len(arglist) != size) {
     throw eval_error("Wrong number of arguments: "
@@ -505,6 +507,7 @@ lref repl_env = std::shared_ptr<Map>(new Map({
       return car(args);
     })},
     {"rand", new LispFunction([](lref args) -> lref {
+      UNREFERENCED(args);
       return std::make_shared<LispInt>(rand());
     })},
     {"strcat", new LispFunction([](lref args) {
