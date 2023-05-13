@@ -102,6 +102,9 @@ lref read_list(Reader* const reader, const lref& end_marker) {
   // Consume the left paren
   reader->next();
 
+  // Need to remember this because forms can be split over multiple lines
+  int original_line = reader->current_line;
+
   // Put things into the list in left to right order
 
   lref ret = Nil;
@@ -124,11 +127,9 @@ lref read_list(Reader* const reader, const lref& end_marker) {
     }
   }
 
-  if (reader->filename != "") {
-    Linum& linum = line_table[(unsigned long)ret.get()];
-    linum.filename = reader->filename;
-    linum.line = reader->current_line;
-  }
+  Linum& linum = line_table[(unsigned long)ret.get()];
+  linum.filename = reader->filename;
+  linum.line = original_line;
   return ret;
 }
 
