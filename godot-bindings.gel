@@ -1,9 +1,0 @@
-(defun get-tree () __gd-tree__)
-(defun get-root () (gd-call __gd-tree__ "get_root"))
-(defun get-node (node-name) (gd-call (get-root) "get_node" node-name))
-
-(defun editor ()
-  (gd-call (get-root) "add_child" (gd-call (get-root) "load" "res://gel_editor/gel_editor.tscn")))
-
-;; TODO: hack; this should really be in test.gel
-(assert (== (type __gd-tree__) 'godot-object))

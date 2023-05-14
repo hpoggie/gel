@@ -1,6 +1,0 @@
-(def history nil)
-
-(defun get-hist-element (n) (nth history n))
-(defun execute-command (command-str)
-  (set history (cons command-str history))
-  (eval (read-string command-str)))

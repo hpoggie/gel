@@ -7,10 +7,9 @@
 
 (import "low-level-macros.gel")
 (import "stdlib.gel")
-(import "console.gel")
-(import "compiler.gel")
-(import "test-assembler.gel")
-(import "test-compiler.gel")
+;;(import "compiler.gel")
+;;(import "test-assembler.gel")
+;;(import "test-compiler.gel")
 
 ;;(eval (replace-function-names (macroexpand-recursive (quote
 ;;(dotimes 300
