@@ -16,6 +16,4 @@
   ;;(transpose2 '((1 2) (3 4) (5 6))))
 ;;))))
 
-(prn "boot.gel loaded.")
-
 (import "repl.gel")

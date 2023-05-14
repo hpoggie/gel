@@ -9,4 +9,5 @@
          ex (prn ex))
         (repl)))))
 
+(prn "GEL version 0. Let's rock")
 (repl)
