@@ -104,6 +104,8 @@
                       (cddr forms))))))
 
 ;; TODO: better way of handling this, this looks up the key twice
+;; This is not simple to solve, since I can't just catch an exception for
+;; performance reasons. Maybe I need an undefined construct
 (defmacro def-persistent (key val)
   `(if (defined? ',key) (env-get ',key) (def ,key ,val)))
 
