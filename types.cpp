@@ -336,16 +336,12 @@ LispInt LispInt::operator%(const LispInt& rhs) const {
   return val % rhs.val;
 }
 
-lisp_error::lisp_error(lref value) : value(value) {
-  this->stack_trace = std::make_shared<String>(backtrace());
-}
+lisp_error::lisp_error(lref value) : value(value) {}
 
 lisp_error::lisp_error(const char* const value) {
   this->value = std::make_shared<String>(value);
-  this->stack_trace = std::make_shared<String>(backtrace());
 }
 
 lisp_error::lisp_error(std::string value) {
   this->value = std::make_shared<String>(value);
-  this->stack_trace = std::make_shared<String>(backtrace());
 }
